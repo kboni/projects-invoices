@@ -15,6 +15,10 @@ const createWindow = (): void => {
       ? 'http://localhost:9000'
       : `file://${app.getAppPath()}/index.html`,
   );
+  if (isDev) {
+    win.webContents.openDevTools();
+  }
+ 
 }
 
 app.on('ready', createWindow);

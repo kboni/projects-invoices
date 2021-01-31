@@ -1,16 +1,12 @@
 import React from 'react';
+import TabsComponent from '@/components/tabs/tabs'
+import GrandTotalComponent from '@/components/grand-total/grand-total';
 
 const App = () => {
   return (
     <div className="app">
-      <div>
-            <span>Ukupan iznos: 1,500,000.00 HRK</span>
-        </div>
-        <div className="tab">
-            <button className="tablinks">Projekti</button>
-            <button className="tablinks">Sekcije</button>
-            <button className="tablinks">Oznake</button>
-          </div>
+      <GrandTotalComponent />
+      <TabsComponent />
         <section className="tabcontent" id="projectstab">
             <div>
                 <select name="projects" id="projectsSelector">

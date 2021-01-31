@@ -25,12 +25,11 @@ module.exports = {
         use: [{ loader: 'ts-loader' }]
       },
       {
-        test: /\.s[ac]ss$/i,
+        test: /\.css$/i,
         use: [
           'style-loader',
-          'css-loader',
-          'sass-loader',
-        ],
+          'css-loader'
+        ]
       }
     ]
   },
