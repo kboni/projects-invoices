@@ -8,3 +8,15 @@ export function getAllProjects(): IProject[] {
     { uid: 'sdgfs3df5', name: 'Nesto', amount: 10000, description: 'Nest'}
   ];
 }
+
+export function insertNewProject(project: IProject): void {
+  // TODO: Implement with the DB
+}
+
+export function updateProject(project: IProject): void {
+  // TODO: Implement with the DB
+}
+
+export function deleteProjects(project: IProject[]): void {
+  // TODO: Implement with the DB
+}

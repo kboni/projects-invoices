@@ -4,3 +4,9 @@ export interface IProject {
   amount: number;
   description: string;
 }
+
+
+export interface IProjectDetailsProps {
+  selectedProjects: IProject[];
+  editMode: boolean;
+}

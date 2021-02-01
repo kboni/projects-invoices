@@ -1,12 +1,10 @@
-import { IProject } from '@/models/projects.interface';
+import { IProjectDetailsProps } from '@/models/projects.interface';
 import React from 'react';
-
-interface IProjectDetailsProps {
-  selectedProjects: IProject[];
-}
+import '../../../../../../assets/style/project-details-box.css';
 
 export default function ProjectDetailsBoxComponent(props: IProjectDetailsProps) {
   const selectedProjects = props.selectedProjects;
+  const editMode = props.editMode;
 
   function showDetails() {
     if (selectedProjects.length === 1) {
@@ -29,12 +27,22 @@ export default function ProjectDetailsBoxComponent(props: IProjectDetailsProps) 
     )
   }
 
+  function showAndEditDetails() {
   return (
-    <div style={{border: '1px solid', color: 'cornflowerblue', marginTop: '10px', padding: '10px'}}>
+      <p>
+        <span>Naziv: <input type="text" name="projectName" value={selectedProjects[0].name}/></span><br/>
+        <span>Iznos: <input type="text" name="projectAmount" value={selectedProjects[0].amount}/> HRK</span><br/>
+        <span>Opis: <textarea name="projectDescription">{selectedProjects[0].description}</textarea></span>
+      </p>
+    )
+  }
+
+  return (
+    <div className="project-details-box">
       <p>
         <span>Detalji projekta:</span>
       </p>
-      {showDetails()}
+      {editMode ? showAndEditDetails() : showDetails()}
     </div>
   );
 }

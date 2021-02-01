@@ -1,6 +1,6 @@
-import { IProject } from '@/models/projects.interface';
+import { OperationEnum } from '@/models/edit-mode-operations.enum';
 import { getAllProjects } from '@/services/project.service';
-import { selectedProjectsState } from '@/state/projects.state';
+import { editModeOperationState, editModeState, selectedProjectsState } from '@/state/projects.state';
 import { mapDropdownOptionsToIProjects, mapIProjectsToDropdownOptions } from '@/utils/utils';
 import { useState } from '@hookstate/core';
 import React from 'react';
@@ -9,6 +9,9 @@ import { Option } from "react-multi-select-component/dist/lib/interfaces";
 import ProjectDetailsBoxComponent from '../shared/project-details-box/project-details-box';
 
 export default function ProjectContainerComponent() {
+
+  const editMode = useState(editModeState);
+  const editModeOperation = useState(editModeOperationState);
 
   const selectedProjects = useState(selectedProjectsState);
   const selectedOptions = mapIProjectsToDropdownOptions(selectedProjects.get());
@@ -23,8 +26,13 @@ export default function ProjectContainerComponent() {
 
   function showAddButton() {
     return (
-      <button>Dodaj</button>
+      <button onClick={onAddButtonClick}>Dodaj novi projekt</button>
     )
+  }
+
+  function onAddButtonClick() {
+    editMode.set(true);
+    editModeOperation.set(OperationEnum.INSERT);
   }
 
   function showEditButton() {
@@ -46,7 +54,9 @@ export default function ProjectContainerComponent() {
   function showProjectDetailsBox() {
     if (selectedProjects.get().length > 0) {
       return (
-        <ProjectDetailsBoxComponent selectedProjects={selectedProjects.get()}/>
+        <ProjectDetailsBoxComponent 
+          selectedProjects={selectedProjects.get()}
+          editMode={editMode.get()}/>
       )
     }
   }
