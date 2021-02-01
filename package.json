@@ -33,6 +33,6 @@
   },
   "dependencies": {
     "@hookstate/core": "^3.0.4",
-    "multiselect-react-dropdown": "^1.6.3"
+    "react-multi-select-component": "^3.1.2"
   }
 }
