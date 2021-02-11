@@ -3,4 +3,21 @@
   color: cornflowerblue;
   margin-top: 10px;
   padding: 10px;
+  width: fit-content;
+}
+
+.button-container {
+  margin: 10px 0px;
+}
+
+.multi-select {
+  max-width: 350px;
+}
+
+.row {
+  display: flex;
+}
+
+.column {
+  flex: 50%;
 }

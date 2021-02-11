@@ -3,10 +3,12 @@ import { IProject } from '@/models/projects.interface';
 import { deleteProjects, getAllProjects } from '@/services/project.service';
 import { generateEmptyProjectObject, mapDropdownOptionsToIProjects, mapIProjectsToDropdownOptions } from '@/utils/utils';
 import React, { useState } from 'react';
+import { confirmAlert } from 'react-confirm-alert';
 import MultiSelect from "react-multi-select-component";
 import { Option } from "react-multi-select-component/dist/lib/interfaces";
 import InvoicesTableComponent from '../invoices-table/invoices-table';
 import ProjectDetailsBoxComponent from '../shared/project-details-box/project-details-box';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 
 export default function ProjectContainerComponent() {
 
@@ -20,12 +22,16 @@ export default function ProjectContainerComponent() {
   const [projectToEdit, setProjectToEdit] = useState(generateEmptyProjectObject());
 
   React.useEffect(() => {
+    loadAllProjects()
+  }, []);
+
+  function loadAllProjects() {
     getAllProjects()
     .then((projects: IProject[]) => {
       setAllProjects(projects);
       setAllOptions(mapIProjectsToDropdownOptions(projects));
     });
-  }, []);
+  }
 
   function onAddButtonClick() {
     setEditMode(true);
@@ -40,7 +46,32 @@ export default function ProjectContainerComponent() {
   }
 
   function onDeleteButtonClick() {
-    deleteProjects(getSelectedProjects());
+    confirmAlert({
+      title: 'Confirm to submit',
+      message: 'Are you sure you want to delete the selected project(s)?',
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: () => {
+            console.log("Delete")
+            deleteProjects(getSelectedProjects())
+            .then((arrayOfDeletedRowNumbers: number[]) => {
+              console.log(arrayOfDeletedRowNumbers);
+              loadAllProjects();
+              setSelectedOptions([]);
+            })
+            .catch((err: Error) => {
+              console.error(err);
+              alert(err.message);
+            });
+          }
+        },
+        {
+          label: 'No',
+          onClick: () => {}
+        }
+      ]
+    });
   }
 
   function getSelectedProjects(): IProject[] {
@@ -49,31 +80,36 @@ export default function ProjectContainerComponent() {
   
   return (
     <div>
-      <MultiSelect 
-        labelledBy={"Select"}
-        options={allOptions}
-        value={selectedOptions}
-        disabled={editMode}
-        // isLoading={true} // TODO implement for fetching and actions
-        onChange={setSelectedOptions} />
-        
-      <button onClick={onAddButtonClick}>Dodaj novi projekt</button>
-      {selectedOptions.length === 1 && <button onClick={onEditButtonClick}>Uredi</button>}
-      {selectedOptions.length > 0 && <button onClick={onDeleteButtonClick}>Obrisi oznaceno</button>}
-
-      {selectedOptions.length > 0 
-        && <ProjectDetailsBoxComponent
-          editMode={editMode}
-          setEditMode={setEditMode}
-          editModeOperation={editModeOperation}
-          setEditModeOperation={setEditModeOperation}
-          selectedOptions={selectedOptions}
-          setSelectedOptions={setSelectedOptions}
-          allProjects={allProjects}
-          projectToEdit={projectToEdit}
-          setProjectToEdit={setProjectToEdit}
-          getSelectedProjects={getSelectedProjects}
-        />}
+      <div className="row">
+        <div className="column">
+          <div className="button-container">
+            <button onClick={onAddButtonClick}>Dodaj novi projekt</button>
+            {selectedOptions.length === 1 && <button onClick={onEditButtonClick}>Uredi</button>}
+            {selectedOptions.length > 0 && <button onClick={onDeleteButtonClick}>Obrisi oznaceno</button>}
+          </div>
+          <MultiSelect 
+            labelledBy={"Select"}
+            options={allOptions}
+            value={selectedOptions}
+            disabled={editMode}
+            // isLoading={true} // TODO implement for fetching and actions
+            onChange={setSelectedOptions} />
+        </div>
+        <div className="column">
+          {(selectedOptions.length > 0 || editModeOperation === OperationEnum.INSERT)
+          && <ProjectDetailsBoxComponent
+            editMode={editMode}
+            setEditMode={setEditMode}
+            editModeOperation={editModeOperation}
+            setEditModeOperation={setEditModeOperation}
+            projectToEdit={projectToEdit}
+            setProjectToEdit={setProjectToEdit}
+            getSelectedProjects={getSelectedProjects}
+            loadAllProjects={loadAllProjects}
+            setSelectedOptions={setSelectedOptions}
+          />}
+        </div>
+      </div>
       <InvoicesTableComponent />
     </div>
   );

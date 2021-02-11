@@ -45,7 +45,8 @@ function createWindow(): void {
       .from("Project")
   });
 
-  ipcMain.handle('insertNewProject', function(event, project: IProject): Promise<IProject>{
+  ipcMain.handle('insertNewProject', function(event, project: IProject): Promise<number[]>{
+    project.uid = project.uid ? project.uid : generateUid();
     return knex('Project')
       .insert({
         uid: project.uid,
@@ -57,34 +58,29 @@ function createWindow(): void {
       .merge({
         uid: generateUid()
       })
-      .then((cost: number[]) => { //TODO
-        console.log('INSERTED')
-        console.log(cost)
-        return Promise.resolve(project);
-      })
-      .catch((err: Error) => { // TODO
-        return Promise.reject('Insert error happened! ERROR: ' + err.message);
-      });
   });
 
-  ipcMain.handle('updateProject', function(event, project: IProject): Promise<IProject>{
+  ipcMain.handle('updateProject', function(event, project: IProject): Promise<number>{
     return knex('Project')
       .where('uid', project.uid)
       .update({
         name: project.name,
         cost: project.cost,
         description: project.description
-      },
-      ['uid', 'name', 'cost', 'description']);
+      });
   });
 
-  ipcMain.handle('deleteProjects', function(event, projects: IProject[]): void {
+  ipcMain.handle('deleteProjects', function(event, projects: IProject[]): Promise<number[]> {
+    const promises = [];
+
     for (let project of projects) {
-      knex('Project')
+      promises.push(knex('Project')
         .where('uid', project.uid)
-        .delete();
-    };
+        .del());
+    }
+    return Promise.all(promises);
   });
+  
 }
 
 app.on('ready', createWindow);

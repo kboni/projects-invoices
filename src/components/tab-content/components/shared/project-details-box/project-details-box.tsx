@@ -1,8 +1,8 @@
 import { OperationEnum } from '@/models/edit-mode-operations.enum';
 import { IProject } from '@/models/projects.interface';
+import { insertNewProject, updateProject } from '@/services/project.service';
 import { generateEmptyProjectObject } from '@/utils/utils';
 import React, { ChangeEvent, Dispatch } from 'react';
-import { Option } from "react-multi-select-component/dist/lib/interfaces";
 import '../../../../../../assets/style/project-details-box.css';
 
 export default function ProjectDetailsBoxComponent(
@@ -11,12 +11,11 @@ export default function ProjectDetailsBoxComponent(
     setEditMode: Dispatch<React.SetStateAction<boolean>>
     editModeOperation: OperationEnum,
     setEditModeOperation: Dispatch<React.SetStateAction<OperationEnum>>,
-    selectedOptions: Option[],
-    setSelectedOptions: Dispatch<React.SetStateAction<Option[]>>,
-    allProjects: IProject[],
     projectToEdit: IProject,
     setProjectToEdit: Dispatch<React.SetStateAction<IProject>>,
-    getSelectedProjects: Function
+    getSelectedProjects: Function,
+    setSelectedOptions: Function,
+    loadAllProjects: Function
 }
 ) {
 
@@ -47,14 +46,41 @@ export default function ProjectDetailsBoxComponent(
   function showAndEditDetails() {
 
     function onSaveButtonClick() {
-      // TODO: Insert ot DB and to allProjects
-      // console.log(projectToEdit);
-      props.setEditMode(false);
+      if (props.editModeOperation === OperationEnum.INSERT) {
+        insertNewProject(props.projectToEdit)
+        .then((insertedProjectIdArray: number[]) => {
+          console.log("INSERT")
+          console.log(insertedProjectIdArray)
+          props.loadAllProjects();
+          props.setEditMode(false);
+          props.setEditModeOperation(OperationEnum.NONE);
+          props.setSelectedOptions([]); // TODO: select newly inserted
+        })
+        .catch((err: Error) => {
+          console.error(err);
+          alert(err.message);
+        });
+      } else if (props.editModeOperation === OperationEnum.UPDATE) {
+        updateProject(props.projectToEdit)
+        .then((numberOfUpdatedItems: number) => {
+          console.log("UPDATE")
+          console.log(numberOfUpdatedItems)
+          props.loadAllProjects();
+          props.setEditMode(false);
+          props.setEditModeOperation(OperationEnum.NONE);
+        })
+        .catch((err: Error) => {
+          console.error(err);
+          alert(err.message);
+        });
+      }
+      
     }
 
     function onCancelButtonClick() {
       props.setProjectToEdit(generateEmptyProjectObject());
       props.setEditMode(false);
+      props.setEditModeOperation(OperationEnum.NONE);
     }
 
     function onChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
@@ -85,6 +111,7 @@ export default function ProjectDetailsBoxComponent(
               onChange={onChange}
             />
           </span> <br/>
+
           <button onClick={onSaveButtonClick}>Save</button>
           <button onClick={onCancelButtonClick}>Cancel</button>
         </p>

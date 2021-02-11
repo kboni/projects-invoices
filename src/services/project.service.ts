@@ -5,14 +5,14 @@ export function getAllProjects(): Promise<IProject[]> {
   return ipcRenderer.invoke("getAllProjects")
 }
 
-export function insertNewProject(project: IProject): Promise<IProject> {
+export function insertNewProject(project: IProject): Promise<number[]> {
   return ipcRenderer.invoke("insertNewProject", project);
 }
 
-export function updateProject(project: IProject): Promise<IProject> {
+export function updateProject(project: IProject): Promise<number> {
   return ipcRenderer.invoke("updateProject", project);
 }
 
-export function deleteProjects(projects: IProject[]): void {
-  ipcRenderer.invoke("deleteProjects", projects);
+export function deleteProjects(projects: IProject[]): Promise<any> {
+  return ipcRenderer.invoke("deleteProjects", projects);
 }
