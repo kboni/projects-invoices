@@ -1,64 +1,50 @@
 import { OperationEnum } from '@/models/edit-mode-operations.enum';
-import { getAllProjects } from '@/services/project.service';
-import { editModeOperationState, editModeState, selectedProjectsState } from '@/state/projects.state';
-import { mapDropdownOptionsToIProjects, mapIProjectsToDropdownOptions } from '@/utils/utils';
-import { useState } from '@hookstate/core';
-import React from 'react';
+import { IProject } from '@/models/projects.interface';
+import { deleteProjects, getAllProjects } from '@/services/project.service';
+import { generateEmptyProjectObject, mapDropdownOptionsToIProjects, mapIProjectsToDropdownOptions } from '@/utils/utils';
+import React, { useState } from 'react';
 import MultiSelect from "react-multi-select-component";
 import { Option } from "react-multi-select-component/dist/lib/interfaces";
+import InvoicesTableComponent from '../invoices-table/invoices-table';
 import ProjectDetailsBoxComponent from '../shared/project-details-box/project-details-box';
 
 export default function ProjectContainerComponent() {
 
-  const editMode = useState(editModeState);
-  const editModeOperation = useState(editModeOperationState);
-
-  const selectedProjects = useState(selectedProjectsState);
-  const selectedOptions = mapIProjectsToDropdownOptions(selectedProjects.get());
+  const [editMode, setEditMode] = useState(false);
+  const [editModeOperation, setEditModeOperation] = useState(OperationEnum.NONE);
   
-  // TODO:  Make it async
-  const allProjects = getAllProjects();
-  const allOptions: Option[] = mapIProjectsToDropdownOptions(allProjects);
+  const [allProjects, setAllProjects] = useState([] as IProject[]);
+  const [allOptions, setAllOptions] = useState([] as Option[]);
+ 
+  const [selectedOptions, setSelectedOptions] = useState([] as Option[]);
+  const [projectToEdit, setProjectToEdit] = useState(generateEmptyProjectObject());
 
-  function onChange(options: Option[]): void {
-    selectedProjects.set(mapDropdownOptionsToIProjects(allProjects, options))
-  }
-
-  function showAddButton() {
-    return (
-      <button onClick={onAddButtonClick}>Dodaj novi projekt</button>
-    )
-  }
+  React.useEffect(() => {
+    getAllProjects()
+    .then((projects: IProject[]) => {
+      setAllProjects(projects);
+      setAllOptions(mapIProjectsToDropdownOptions(projects));
+    });
+  }, []);
 
   function onAddButtonClick() {
-    editMode.set(true);
-    editModeOperation.set(OperationEnum.INSERT);
+    setEditMode(true);
+    setEditModeOperation(OperationEnum.INSERT);
+    setProjectToEdit(generateEmptyProjectObject());
   }
 
-  function showEditButton() {
-    if (selectedProjects.get().length === 1) {
-      return (
-        <button>Uredi</button>
-      )
-    }
+  function onEditButtonClick() {
+    setEditMode(true);
+    setEditModeOperation(OperationEnum.UPDATE);
+    setProjectToEdit(getSelectedProjects()[0]);
   }
 
-  function showDeleteButton() {
-    if (selectedProjects.get().length > 0) {
-      return (
-        <button>Obrisi oznaceno</button>
-      )
-    }
+  function onDeleteButtonClick() {
+    deleteProjects(getSelectedProjects());
   }
-  
-  function showProjectDetailsBox() {
-    if (selectedProjects.get().length > 0) {
-      return (
-        <ProjectDetailsBoxComponent 
-          selectedProjects={selectedProjects.get()}
-          editMode={editMode.get()}/>
-      )
-    }
+
+  function getSelectedProjects(): IProject[] {
+    return mapDropdownOptionsToIProjects(allProjects, selectedOptions)
   }
   
   return (
@@ -67,12 +53,28 @@ export default function ProjectContainerComponent() {
         labelledBy={"Select"}
         options={allOptions}
         value={selectedOptions}
-        onChange={onChange} />
-      {showAddButton()}
-      {showEditButton()}
-      {showDeleteButton()}
+        disabled={editMode}
+        // isLoading={true} // TODO implement for fetching and actions
+        onChange={setSelectedOptions} />
+        
+      <button onClick={onAddButtonClick}>Dodaj novi projekt</button>
+      {selectedOptions.length === 1 && <button onClick={onEditButtonClick}>Uredi</button>}
+      {selectedOptions.length > 0 && <button onClick={onDeleteButtonClick}>Obrisi oznaceno</button>}
 
-      {showProjectDetailsBox()}
+      {selectedOptions.length > 0 
+        && <ProjectDetailsBoxComponent
+          editMode={editMode}
+          setEditMode={setEditMode}
+          editModeOperation={editModeOperation}
+          setEditModeOperation={setEditModeOperation}
+          selectedOptions={selectedOptions}
+          setSelectedOptions={setSelectedOptions}
+          allProjects={allProjects}
+          projectToEdit={projectToEdit}
+          setProjectToEdit={setProjectToEdit}
+          getSelectedProjects={getSelectedProjects}
+        />}
+      <InvoicesTableComponent />
     </div>
   );
 }

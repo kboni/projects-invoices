@@ -1,48 +1,102 @@
-import { IProjectDetailsProps } from '@/models/projects.interface';
-import React from 'react';
+import { OperationEnum } from '@/models/edit-mode-operations.enum';
+import { IProject } from '@/models/projects.interface';
+import { generateEmptyProjectObject } from '@/utils/utils';
+import React, { ChangeEvent, Dispatch } from 'react';
+import { Option } from "react-multi-select-component/dist/lib/interfaces";
 import '../../../../../../assets/style/project-details-box.css';
 
-export default function ProjectDetailsBoxComponent(props: IProjectDetailsProps) {
-  const selectedProjects = props.selectedProjects;
-  const editMode = props.editMode;
+export default function ProjectDetailsBoxComponent(
+  props: {
+    editMode: boolean,
+    setEditMode: Dispatch<React.SetStateAction<boolean>>
+    editModeOperation: OperationEnum,
+    setEditModeOperation: Dispatch<React.SetStateAction<OperationEnum>>,
+    selectedOptions: Option[],
+    setSelectedOptions: Dispatch<React.SetStateAction<Option[]>>,
+    allProjects: IProject[],
+    projectToEdit: IProject,
+    setProjectToEdit: Dispatch<React.SetStateAction<IProject>>,
+    getSelectedProjects: Function
+}
+) {
 
   function showDetails() {
-    if (selectedProjects.length === 1) {
+    console.log('showDetails')
+    const currentSelectedProjects: IProject[] = props.getSelectedProjects() as IProject[];
+    if (currentSelectedProjects.length === 1) {
       return (
         <p>
-          <span>Naziv: {selectedProjects[0].name}</span><br/>
-          <span>Iznos: {selectedProjects[0].amount} HRK</span><br/>
-          <span>Opis: {selectedProjects[0].description}</span>
+          <span>Naziv: {currentSelectedProjects[0].name}</span><br/>
+          <span>Iznos: {currentSelectedProjects[0].cost} HRK</span><br/>
+          <span>Opis: {currentSelectedProjects[0].description}</span>
         </p>
       )
     }
     let totalAmout = 0;
-    for (const project of selectedProjects) {
-      totalAmout += project.amount;
+    for (const project of currentSelectedProjects) {
+      totalAmout += project.cost;
     }
+
     return (
       <p>
         <span>Ukupan iznos oznacenih: {totalAmout} HRK</span><br/>
       </p>
     )
   }
-
+  
   function showAndEditDetails() {
-  return (
-      <p>
-        <span>Naziv: <input type="text" name="projectName" value={selectedProjects[0].name}/></span><br/>
-        <span>Iznos: <input type="text" name="projectAmount" value={selectedProjects[0].amount}/> HRK</span><br/>
-        <span>Opis: <textarea name="projectDescription">{selectedProjects[0].description}</textarea></span>
-      </p>
-    )
-  }
+
+    function onSaveButtonClick() {
+      // TODO: Insert ot DB and to allProjects
+      // console.log(projectToEdit);
+      props.setEditMode(false);
+    }
+
+    function onCancelButtonClick() {
+      props.setProjectToEdit(generateEmptyProjectObject());
+      props.setEditMode(false);
+    }
+
+    function onChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+      props.setProjectToEdit((prevState: IProject) => ({
+          ...prevState,
+          [event.target.name]: event.target.value
+      }));
+    }
+  
+    return (
+        <p>
+          <span>Naziv: 
+            <input type="text"
+              value={props.projectToEdit.name} name="name"
+              onChange={onChange}
+            />
+          </span><br/>
+          <span>Iznos: 
+            <input type="number" 
+              value={props.projectToEdit.cost} name="cost"
+              onChange={onChange}
+            /> 
+            HRK
+          </span><br/>
+          <span>Opis: 
+            <textarea
+              value={props.projectToEdit.description} name="description"
+              onChange={onChange}
+            />
+          </span> <br/>
+          <button onClick={onSaveButtonClick}>Save</button>
+          <button onClick={onCancelButtonClick}>Cancel</button>
+        </p>
+      )
+    }
 
   return (
     <div className="project-details-box">
       <p>
         <span>Detalji projekta:</span>
       </p>
-      {editMode ? showAndEditDetails() : showDetails()}
+      {props.editMode ? showAndEditDetails() : showDetails()}
     </div>
   );
 }

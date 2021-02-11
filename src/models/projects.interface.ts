@@ -1,12 +1,8 @@
+import { OperationEnum } from "./edit-mode-operations.enum";
+
 export interface IProject {
   uid: string;
   name: string;
-  amount: number;
+  cost: number;
   description: string;
-}
-
-
-export interface IProjectDetailsProps {
-  selectedProjects: IProject[];
-  editMode: boolean;
 }

@@ -1,22 +1,18 @@
 import { IProject } from "@/models/projects.interface";
+import { ipcRenderer } from "electron";
 
-export function getAllProjects(): IProject[] {
-  // TODO: Implement fetching from the DB
-  return [
-    { uid: 'sd1as3df5', name: 'Project 1', amount: 500000, description: 'Desc'},
-    { uid: 'sd1as3r53', name: 'Project 2', amount: 50000, description: 'Desc 2'},
-    { uid: 'sdgfs3df5', name: 'Nesto', amount: 10000, description: 'Nest'}
-  ];
+export function getAllProjects(): Promise<IProject[]> {
+  return ipcRenderer.invoke("getAllProjects")
 }
 
-export function insertNewProject(project: IProject): void {
-  // TODO: Implement with the DB
+export function insertNewProject(project: IProject): Promise<IProject> {
+  return ipcRenderer.invoke("insertNewProject", project);
 }
 
-export function updateProject(project: IProject): void {
-  // TODO: Implement with the DB
+export function updateProject(project: IProject): Promise<IProject> {
+  return ipcRenderer.invoke("updateProject", project);
 }
 
-export function deleteProjects(project: IProject[]): void {
-  // TODO: Implement with the DB
+export function deleteProjects(projects: IProject[]): void {
+  ipcRenderer.invoke("deleteProjects", projects);
 }

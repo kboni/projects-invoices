@@ -6,24 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Invoices</title>
-
-  <script>
-    const electron = require("electron");
-    const ipc = electron.ipcRenderer;
-    document.addEventListener("DOMContentLoaded", function(){
-        ipc.send("mainWindowLoaded")
-        ipc.on("resultSent", function(evt, result){
-            let resultEl = document.getElementById("result");
-            console.log(result);
-            for(var i = 0; i < result.length;i++){
-                resultEl.innerHTML += "Project Name: " + result[i].name.toString() + "<br/>";
-            }
-        });
-    });
-</script>
 </head>
+
 <body>
-  <p id="result"></p>
   <div id="root">Loading...</div>
 </body>
 

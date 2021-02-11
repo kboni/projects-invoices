@@ -2,15 +2,11 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import isDev from 'electron-is-dev'; // New Import
 import Knex from 'knex';
 import path from 'path';
+import { IProject } from './models/projects.interface';
+import { generateUid } from './utils/utils';
+// import { dialog } from 'electron';
 
-function createWindow(): void {
-  // TODO: 
-	const knex = Knex({
-		client: "sqlite3",
-		connection: {
-			filename: path.join(__dirname, 'database.sqlite')
-		}
-	});
+function createWindow(): void {  
 
   let mainWindow = new BrowserWindow({
     width: 800,
@@ -20,24 +16,75 @@ function createWindow(): void {
     },
     show: false
   });
+
+  // const b = dialog.showOpenDialogSync(mainWindow, { properties: ['openFile'] });
+
+  // console.log(b)
+  // TODO: 
+	const knex = Knex({
+		client: "sqlite3",
+		connection: {
+			// filename: b ? b[0] : path.join(__dirname, 'database.sqlite')
+			filename: path.join(__dirname, '../db/database.sqlite')
+		}
+	});
+
   console.log(isDev);
   mainWindow.loadURL(
     isDev
       ? 'http://localhost:9000'
-      : `file://${app.getAppPath()}/index.html`,
+      : `file://${path.join(__dirname, 'index.html')}` // OR app.getAppPath()
   );
-  if (isDev) {
-    mainWindow.webContents.openDevTools();
-  }
   mainWindow.once("ready-to-show", () => { mainWindow.show() })
 
-  // TODO:
-  ipcMain.on("mainWindowLoaded", function () {
-		let result = knex.select("name").from("Project")
-		result.then(function(rows: any){
-			mainWindow.webContents.send("resultSent", rows);
-		})
-	});
+  mainWindow.on('closed', () => app.quit());
+
+  ipcMain.handle('getAllProjects', function(event): Promise<IProject[]> {
+    return knex
+      .select('uid', 'name', 'cost', 'description')
+      .from("Project")
+  });
+
+  ipcMain.handle('insertNewProject', function(event, project: IProject): Promise<IProject>{
+    return knex('Project')
+      .insert({
+        uid: project.uid,
+        name: project.name,
+        cost: project.cost,
+        description: project.description
+      })
+      .onConflict('uid')
+      .merge({
+        uid: generateUid()
+      })
+      .then((cost: number[]) => { //TODO
+        console.log('INSERTED')
+        console.log(cost)
+        return Promise.resolve(project);
+      })
+      .catch((err: Error) => { // TODO
+        return Promise.reject('Insert error happened! ERROR: ' + err.message);
+      });
+  });
+
+  ipcMain.handle('updateProject', function(event, project: IProject): Promise<IProject>{
+    return knex('Project')
+      .where('uid', project.uid)
+      .update({
+        name: project.name,
+        cost: project.cost,
+        description: project.description
+      },
+      ['uid', 'name', 'cost', 'description']);
+  });
+
+  ipcMain.handle('deleteProjects', function(event, projects: IProject[]): void {
+    for (let project of projects) {
+      knex('Project')
+        .where('uid', project.uid)
+        .delete();
+    };
+  });
 }
 
 app.on('ready', createWindow);

@@ -41,10 +41,5 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: './src/index.html'
     })
-  ],
-  externals: {
-    'node-gyp': 'node-gyp',
-    'node-pre-gyp': 'node-pre-gyp',
-    'sqlite3': 'commonjs sqlite3'
-  }
+  ]
 };
