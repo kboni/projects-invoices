@@ -81,6 +81,7 @@ export default function ProjectDetailsBoxComponent(
       props.setEditModeOperation(OperationEnum.NONE);
     }
 
+    // TODO: Duplicated - put it to shared
     function onChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
       props.setProjectToEdit((prevState: IProject) => ({
           ...prevState,

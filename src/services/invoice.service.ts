@@ -6,8 +6,8 @@ export function getInvoices(projects: IProject[]): Promise<IInvoice[]> {
   return ipcRenderer.invoke("getInvoices", projects);
 }
 
-export function insertNewInvoice(invoice: IInvoice, project: IProject): Promise<IInvoice[]> {
-  return ipcRenderer.invoke("insertNewInvoice", invoice, project);
+export function insertNewInvoice(invoice: IInvoice): Promise<IInvoice> {
+  return ipcRenderer.invoke("insertNewInvoice", invoice);
 }
 
 export function updateProject(project: IProject): Promise<number> {

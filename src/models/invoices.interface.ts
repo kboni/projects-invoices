@@ -5,7 +5,7 @@ export interface IInvoice {
   description: string;
   amount: number;
   attachment: string;
-  //TODO: label
-  createdAt: Date;
-  updatedAt: Date;
+  elementLabelUid: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }

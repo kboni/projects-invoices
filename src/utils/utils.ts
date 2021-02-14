@@ -1,6 +1,8 @@
 import { IProject } from "@/models/projects.interface";
 import { Option } from "react-multi-select-component/dist/lib/interfaces";
 import short from 'short-uuid';
+import dateFormat from "dateformat";
+import { IInvoice } from "@/models/invoices.interface";
 
 export function mapIProjectsToDropdownOptions(projects: IProject[]): Option[] {
   return projects.map((project: IProject) => {
@@ -36,6 +38,22 @@ export function generateEmptyProjectObject(): IProject {
   }
 }
 
+export function generateEmptyInvoiceObject(): IInvoice {
+  return { 
+    uid: '',
+    projectUid: '',
+    name: '',
+    amount: 0,
+    description: '',
+    attachment: '',
+    elementLabelUid: '',
+  }
+}
+
 export function generateUid(): string {
   return short.generate();
+}
+
+export function formateDateTime(date?: Date): string {
+  return date ? dateFormat(date, 'dd.mm.yyyy HH:MM') : '';
 }

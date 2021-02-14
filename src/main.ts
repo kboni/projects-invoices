@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import isDev from 'electron-is-dev'; // New Import
-import Knex from 'knex';
+import Knex, { QueryBuilder } from 'knex';
 import path from 'path';
 import { IInvoice } from './models/invoices.interface';
 import { IProject } from './models/projects.interface';
@@ -97,15 +97,17 @@ function createWindow(): void {
   // INVOICES
   ipcMain.handle('getInvoices', function(event, projects: IProject[]): Promise<IInvoice[]> {
     return knex("Invoice")
-      .select('uid', 'project_uid', 'name', 'amount', 'description', 'created_at', 'updated_at');
+      .select('uid', 'project_uid', 'name', 'amount', 'description',
+        'created_at', 'updated_at', 'element_label_uid')
+      .whereIn('project_uid', projects.map((project: IProject) => project.uid))
   });
 
-  ipcMain.handle('insertNewInvoice', function(event, invoice: IInvoice, project: IProject): Promise<IInvoice[]>{
+  ipcMain.handle('insertNewInvoice', function(event, invoice: IInvoice): Promise<IInvoice>{
     invoice.uid = invoice.uid ? invoice.uid : generateUid();
     return knex('Invoice')
       .insert({
         uid: invoice.uid,
-        project_uid: project.uid,
+        project_uid: invoice.projectUid,
         name: invoice.name,
         amount: invoice.amount,
         description: invoice.description,
@@ -118,8 +120,13 @@ function createWindow(): void {
         uid: generateUid()
       })
       .then((insertedIdsArray: number[]) => {
-        return knex('Invoice').where('id', insertedIdsArray[0])
+        return knex('Invoice').first().where('id', insertedIdsArray[0])
       })
+  });
+
+  ipcMain.handle('getAllElementLabels', function(event): Promise<IProject[]> {
+    return knex('Element_label')
+      .select('uid', 'name')
   });
   
 }
