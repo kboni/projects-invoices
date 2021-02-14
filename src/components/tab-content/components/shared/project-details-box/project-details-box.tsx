@@ -1,7 +1,7 @@
 import { OperationEnum } from '@/models/edit-mode-operations.enum';
 import { IProject } from '@/models/projects.interface';
 import { insertNewProject, updateProject } from '@/services/project.service';
-import { generateEmptyProjectObject } from '@/utils/utils';
+import { generateEmptyProjectObject, mapIProjectsToDropdownOptions } from '@/utils/utils';
 import React, { ChangeEvent, Dispatch } from 'react';
 import '../../../../../../assets/style/project-details-box.css';
 
@@ -48,13 +48,12 @@ export default function ProjectDetailsBoxComponent(
     function onSaveButtonClick() {
       if (props.editModeOperation === OperationEnum.INSERT) {
         insertNewProject(props.projectToEdit)
-        .then((insertedProjectIdArray: number[]) => {
+        .then((insertedProject: IProject[]) => {
           console.log("INSERT")
-          console.log(insertedProjectIdArray)
+          console.log(insertedProject[0])
           props.loadAllProjects();
-          props.setEditMode(false);
-          props.setEditModeOperation(OperationEnum.NONE);
-          props.setSelectedOptions([]); // TODO: select newly inserted
+          onCancelButtonClick();
+          props.setSelectedOptions(mapIProjectsToDropdownOptions(insertedProject))
         })
         .catch((err: Error) => {
           console.error(err);
@@ -66,8 +65,7 @@ export default function ProjectDetailsBoxComponent(
           console.log("UPDATE")
           console.log(numberOfUpdatedItems)
           props.loadAllProjects();
-          props.setEditMode(false);
-          props.setEditModeOperation(OperationEnum.NONE);
+          onCancelButtonClick();
         })
         .catch((err: Error) => {
           console.error(err);

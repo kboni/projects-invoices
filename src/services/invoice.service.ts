@@ -1,18 +1,19 @@
+import { IInvoice } from "@/models/invoices.interface";
 import { IProject } from "@/models/projects.interface";
+import { ipcRenderer } from "electron";
 
-export function getAllInvoicesByProject(projectId: number): IProject[] {
-  // TODO: Implement fetching from the DB
-  return [];
+export function getInvoices(projects: IProject[]): Promise<IInvoice[]> {
+  return ipcRenderer.invoke("getInvoices", projects);
 }
 
-export function insertNewProject(project: IProject): void {
-  // TODO: Implement with the DB
+export function insertNewInvoice(invoice: IInvoice, project: IProject): Promise<IInvoice[]> {
+  return ipcRenderer.invoke("insertNewInvoice", invoice, project);
 }
 
-export function updateProject(project: IProject): void {
-  // TODO: Implement with the DB
+export function updateProject(project: IProject): Promise<number> {
+  return ipcRenderer.invoke("updateProject", project);
 }
 
-export function deleteProjects(project: IProject[]): void {
-  // TODO: Implement with the DB
+export function deleteProjects(projects: IProject[]): Promise<any> {
+  return ipcRenderer.invoke("deleteProjects", projects);
 }

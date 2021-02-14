@@ -2,8 +2,10 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import isDev from 'electron-is-dev'; // New Import
 import Knex from 'knex';
 import path from 'path';
+import { IInvoice } from './models/invoices.interface';
 import { IProject } from './models/projects.interface';
 import { generateUid } from './utils/utils';
+import knexStringcase from 'knex-stringcase';
 // import { dialog } from 'electron';
 
 function createWindow(): void {  
@@ -21,17 +23,25 @@ function createWindow(): void {
 
   // console.log(b)
   // TODO: 
-	const knex = Knex({
+	const knex = Knex(knexStringcase({
 		client: "sqlite3",
 		connection: {
 			// filename: b ? b[0] : path.join(__dirname, 'database.sqlite')
 			filename: path.join(__dirname, '../db/database.sqlite')
-		}
-	});
+		},
+    // postProcessResponse: (result, queryContext) => {
+    //   // TODO: add special case for raw results (depends on dialect)
+    //   if (Array.isArray(result)) {
+    //     return result.map(row => convertToCamel(row));
+    //   } else {
+    //     return convertToCamel(result);
+    //   }
+    // }
+	}));
 
   console.log(isDev);
   mainWindow.loadURL(
-    isDev
+    isDev // TODO: Replace isDev with ENV vars
       ? 'http://localhost:9000'
       : `file://${path.join(__dirname, 'index.html')}` // OR app.getAppPath()
   );
@@ -45,7 +55,7 @@ function createWindow(): void {
       .from("Project")
   });
 
-  ipcMain.handle('insertNewProject', function(event, project: IProject): Promise<number[]>{
+  ipcMain.handle('insertNewProject', function(event, project: IProject): Promise<IProject[]>{
     project.uid = project.uid ? project.uid : generateUid();
     return knex('Project')
       .insert({
@@ -57,6 +67,9 @@ function createWindow(): void {
       .onConflict('uid')
       .merge({
         uid: generateUid()
+      })
+      .then((insertedIdsArray: number[]) => {
+        return knex('Project').where('id', insertedIdsArray[0])
       })
   });
 
@@ -79,6 +92,34 @@ function createWindow(): void {
         .del());
     }
     return Promise.all(promises);
+  });
+
+  // INVOICES
+  ipcMain.handle('getInvoices', function(event, projects: IProject[]): Promise<IInvoice[]> {
+    return knex("Invoice")
+      .select('uid', 'project_uid', 'name', 'amount', 'description', 'created_at', 'updated_at');
+  });
+
+  ipcMain.handle('insertNewInvoice', function(event, invoice: IInvoice, project: IProject): Promise<IInvoice[]>{
+    invoice.uid = invoice.uid ? invoice.uid : generateUid();
+    return knex('Invoice')
+      .insert({
+        uid: invoice.uid,
+        project_uid: project.uid,
+        name: invoice.name,
+        amount: invoice.amount,
+        description: invoice.description,
+        //TODO: attachment and label
+        created_at: Date.now(),
+        updated_at: Date.now()
+      })
+      .onConflict('uid')
+      .merge({
+        uid: generateUid()
+      })
+      .then((insertedIdsArray: number[]) => {
+        return knex('Invoice').where('id', insertedIdsArray[0])
+      })
   });
   
 }

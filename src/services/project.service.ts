@@ -5,7 +5,7 @@ export function getAllProjects(): Promise<IProject[]> {
   return ipcRenderer.invoke("getAllProjects")
 }
 
-export function insertNewProject(project: IProject): Promise<number[]> {
+export function insertNewProject(project: IProject): Promise<IProject[]> {
   return ipcRenderer.invoke("insertNewProject", project);
 }
 

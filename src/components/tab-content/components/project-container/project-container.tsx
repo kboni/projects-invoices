@@ -21,6 +21,8 @@ export default function ProjectContainerComponent() {
   const [selectedOptions, setSelectedOptions] = useState([] as Option[]);
   const [projectToEdit, setProjectToEdit] = useState(generateEmptyProjectObject());
 
+  const [showInvoices, setShowInvoices] = useState(false);
+
   React.useEffect(() => {
     loadAllProjects()
   }, []);
@@ -84,8 +86,9 @@ export default function ProjectContainerComponent() {
         <div className="column">
           <div className="button-container">
             <button onClick={onAddButtonClick}>Dodaj novi projekt</button>
-            {selectedOptions.length === 1 && <button onClick={onEditButtonClick}>Uredi</button>}
-            {selectedOptions.length > 0 && <button onClick={onDeleteButtonClick}>Obrisi oznaceno</button>}
+            <button disabled={selectedOptions.length !== 1} onClick={onEditButtonClick}>Uredi</button>
+            <button disabled={selectedOptions.length < 1} onClick={onDeleteButtonClick}>Obrisi oznaceno</button>
+            <br /><button disabled={selectedOptions.length < 1} onClick={() => setShowInvoices((prevState: boolean) => !prevState)}>Prikazi racune</button>
           </div>
           <MultiSelect 
             labelledBy={"Select"}
@@ -93,7 +96,7 @@ export default function ProjectContainerComponent() {
             value={selectedOptions}
             disabled={editMode}
             // isLoading={true} // TODO implement for fetching and actions
-            onChange={setSelectedOptions} />
+            onChange={(options: Option[]) => {setSelectedOptions(options); setShowInvoices(false);}} />
         </div>
         <div className="column">
           {(selectedOptions.length > 0 || editModeOperation === OperationEnum.INSERT)
@@ -110,7 +113,11 @@ export default function ProjectContainerComponent() {
           />}
         </div>
       </div>
-      <InvoicesTableComponent />
+      {showInvoices &&
+         <InvoicesTableComponent
+            getSelectedProjects={getSelectedProjects}
+            showInvoices={showInvoices}
+          />}
     </div>
   );
 }
