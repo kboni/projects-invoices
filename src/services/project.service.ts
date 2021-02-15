@@ -13,6 +13,6 @@ export function updateProject(project: IProject): Promise<number> {
   return ipcRenderer.invoke("updateProject", project);
 }
 
-export function deleteProjects(projects: IProject[]): Promise<any> {
+export function deleteProjects(projects: IProject[]): Promise<number[]> {
   return ipcRenderer.invoke("deleteProjects", projects);
 }

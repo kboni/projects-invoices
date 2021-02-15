@@ -14,6 +14,6 @@ export function updateProject(project: IProject): Promise<number> {
   return ipcRenderer.invoke("updateProject", project);
 }
 
-export function deleteProjects(projects: IProject[]): Promise<any> {
-  return ipcRenderer.invoke("deleteProjects", projects);
+export function deleteInvoices(invoices: IInvoice[]): Promise<number[]> {
+  return ipcRenderer.invoke("deleteInvoices", invoices);
 }

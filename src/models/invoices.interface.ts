@@ -9,3 +9,7 @@ export interface IInvoice {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface IInvoiceCheckboxHelper extends IInvoice {
+  checked?: boolean;
+}

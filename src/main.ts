@@ -128,6 +128,17 @@ function createWindow(): void {
     return knex('Element_label')
       .select('uid', 'name')
   });
+
+  ipcMain.handle('deleteInvoices', function(event, invoices: IInvoice[]): Promise<number[]> {
+    const promises = [];
+
+    for (let invoice of invoices) {
+      promises.push(knex('Invoice')
+        .where('uid', invoice.uid)
+        .del());
+    }
+    return Promise.all(promises);
+  });
   
 }
 

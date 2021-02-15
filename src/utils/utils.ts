@@ -57,3 +57,11 @@ export function generateUid(): string {
 export function formateDateTime(date?: Date): string {
   return date ? dateFormat(date, 'dd.mm.yyyy HH:MM') : '';
 }
+
+export function removeItemFromArray(array: string[], item: string): string[] {
+  const index = array.indexOf(item);
+  if (index > -1) {
+    array.splice(index, 1);
+  }
+  return array;
+}

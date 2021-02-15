@@ -47,6 +47,7 @@ export default function ProjectContainerComponent() {
     setProjectToEdit(getSelectedProjects()[0]);
   }
 
+  // TODO: Duplicated - put it to shared
   function onDeleteButtonClick() {
     confirmAlert({
       title: 'Confirm to submit',
@@ -58,6 +59,7 @@ export default function ProjectContainerComponent() {
             console.log("Delete")
             deleteProjects(getSelectedProjects())
             .then((arrayOfDeletedRowNumbers: number[]) => {
+              // TODO: if arrayOfDeletedRowNumbers === [0] then it's an error because nothing got deleted
               console.log(arrayOfDeletedRowNumbers);
               loadAllProjects();
               setSelectedOptions([]);
