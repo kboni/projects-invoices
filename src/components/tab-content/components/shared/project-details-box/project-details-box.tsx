@@ -1,7 +1,9 @@
 import { OperationEnum } from '@/models/edit-mode-operations.enum';
 import { IProject } from '@/models/projects.interface';
+import { TabsEnum } from '@/models/tabs.enum';
 import { insertNewProject, updateProject } from '@/services/project.service';
-import { generateEmptyProjectObject, mapIProjectsToDropdownOptions } from '@/utils/utils';
+import { insertNewSection, updateSection } from '@/services/section.service';
+import { mapIProjectsToDropdownOptions } from '@/utils/utils';
 import React, { ChangeEvent, Dispatch } from 'react';
 import '../../../../../../assets/style/project-details-box.css';
 
@@ -15,7 +17,9 @@ export default function ProjectDetailsBoxComponent(
     setProjectToEdit: Dispatch<React.SetStateAction<IProject>>,
     getSelectedProjects: Function,
     setSelectedOptions: Function,
-    loadAllProjects: Function
+    loadAllProjects: Function,
+    generateEmptyProjectObject: Function,
+    tabMode: TabsEnum
 }
 ) {
 
@@ -47,7 +51,8 @@ export default function ProjectDetailsBoxComponent(
 
     function onSaveButtonClick() {
       if (props.editModeOperation === OperationEnum.INSERT) {
-        insertNewProject(props.projectToEdit)
+        (props.tabMode === TabsEnum.SECTIONS ? insertNewSection(props.projectToEdit) : insertNewProject(props.projectToEdit))
+        
         .then((insertedProject: IProject[]) => {
           console.log("INSERT")
           console.log(insertedProject[0])
@@ -60,7 +65,7 @@ export default function ProjectDetailsBoxComponent(
           alert(err.message);
         });
       } else if (props.editModeOperation === OperationEnum.UPDATE) {
-        updateProject(props.projectToEdit)
+        (props.tabMode === TabsEnum.SECTIONS ? updateSection(props.projectToEdit) : updateProject(props.projectToEdit))
         .then((numberOfUpdatedItems: number) => {
           console.log("UPDATE")
           console.log(numberOfUpdatedItems)
@@ -76,7 +81,7 @@ export default function ProjectDetailsBoxComponent(
     }
 
     function onCancelButtonClick() {
-      props.setProjectToEdit(generateEmptyProjectObject());
+      props.setProjectToEdit(props.generateEmptyProjectObject());
       props.setEditMode(false);
       props.setEditModeOperation(OperationEnum.NONE);
     }

@@ -2,7 +2,7 @@ import { IProject } from "@/models/projects.interface";
 import { Option } from "react-multi-select-component/dist/lib/interfaces";
 import short from 'short-uuid';
 import dateFormat from "dateformat";
-import { IInvoice } from "@/models/invoices.interface";
+import { IInvoice, IInvoiceCheckboxHelper } from "@/models/invoices.interface";
 
 export function mapIProjectsToDropdownOptions(projects: IProject[]): Option[] {
   return projects.map((project: IProject) => {
@@ -29,27 +29,6 @@ export function mapDropdownOptionsToIProjects(allProjects: IProject[], options: 
   return selectedProjects;
 }
 
-export function generateEmptyProjectObject(): IProject {
-  return { 
-    uid: '',
-    name: '',
-    cost: 0,
-    description: ''
-  }
-}
-
-export function generateEmptyInvoiceObject(): IInvoice {
-  return { 
-    uid: '',
-    projectUid: '',
-    name: '',
-    amount: 0,
-    description: '',
-    attachment: '',
-    elementLabelUid: '',
-  }
-}
-
 export function generateUid(): string {
   return short.generate();
 }
@@ -64,4 +43,19 @@ export function removeItemFromArray(array: string[], item: string): string[] {
     array.splice(index, 1);
   }
   return array;
+}
+
+export function cloneObject<T>(object: T): T {
+  return JSON.parse(JSON.stringify(object));
+}
+
+export function removeItemFromArrayOnce<T>(arr: T[] | undefined, value: T): T[] {
+  if (!arr) {
+    return [];
+  }
+  var index = arr.indexOf(value);
+  if (index > -1) {
+    arr.splice(index, 1);
+  }
+  return arr;
 }

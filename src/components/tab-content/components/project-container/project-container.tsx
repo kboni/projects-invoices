@@ -1,7 +1,7 @@
 import { OperationEnum } from '@/models/edit-mode-operations.enum';
 import { IProject } from '@/models/projects.interface';
 import { deleteProjects, getAllProjects } from '@/services/project.service';
-import { generateEmptyProjectObject, mapDropdownOptionsToIProjects, mapIProjectsToDropdownOptions } from '@/utils/utils';
+import { mapDropdownOptionsToIProjects, mapIProjectsToDropdownOptions } from '@/utils/utils';
 import React, { useState } from 'react';
 import { confirmAlert } from 'react-confirm-alert';
 import MultiSelect from "react-multi-select-component";
@@ -9,8 +9,12 @@ import { Option } from "react-multi-select-component/dist/lib/interfaces";
 import InvoicesTableComponent from '../invoices-table/invoices-table';
 import ProjectDetailsBoxComponent from '../shared/project-details-box/project-details-box';
 import 'react-confirm-alert/src/react-confirm-alert.css';
+import { TabsEnum } from '@/models/tabs.enum';
+import { deleteSections, getAllSections } from '@/services/section.service';
 
-export default function ProjectContainerComponent() {
+export default function ProjectContainerComponent(props: {
+  tabMode: TabsEnum
+}) {
 
   const [editMode, setEditMode] = useState(false);
   const [editModeOperation, setEditModeOperation] = useState(OperationEnum.NONE);
@@ -27,8 +31,17 @@ export default function ProjectContainerComponent() {
     loadAllProjects()
   }, []);
 
+  function generateEmptyProjectObject(): IProject {
+    return { 
+      uid: '',
+      name: '',
+      cost: 0,
+      description: ''
+    }
+  }
+
   function loadAllProjects() {
-    getAllProjects()
+    (props.tabMode === TabsEnum.SECTIONS ? getAllSections() : getAllProjects())
     .then((projects: IProject[]) => {
       setAllProjects(projects);
       setAllOptions(mapIProjectsToDropdownOptions(projects));
@@ -56,8 +69,8 @@ export default function ProjectContainerComponent() {
         {
           label: 'Yes',
           onClick: () => {
-            console.log("Delete")
-            deleteProjects(getSelectedProjects())
+            console.log("Delete");
+            (props.tabMode === TabsEnum.SECTIONS ? deleteSections(getSelectedProjects()) : deleteProjects(getSelectedProjects()))
             .then((arrayOfDeletedRowNumbers: number[]) => {
               // TODO: if arrayOfDeletedRowNumbers === [0] then it's an error because nothing got deleted
               console.log(arrayOfDeletedRowNumbers);
@@ -90,7 +103,11 @@ export default function ProjectContainerComponent() {
             <button onClick={onAddButtonClick}>Dodaj novi projekt</button>
             <button disabled={selectedOptions.length !== 1} onClick={onEditButtonClick}>Uredi</button>
             <button disabled={selectedOptions.length < 1} onClick={onDeleteButtonClick}>Obrisi oznaceno</button>
-            <br /><button disabled={selectedOptions.length < 1} onClick={() => setShowInvoices((prevState: boolean) => !prevState)}>Prikazi racune</button>
+            {props.tabMode === TabsEnum.PROJECTS &&
+              <div>
+                <br /><button disabled={selectedOptions.length < 1} onClick={() => setShowInvoices((prevState: boolean) => !prevState)}>Prikazi racune</button>
+              </div>
+            }
           </div>
           <MultiSelect 
             labelledBy={"Select"}
@@ -98,7 +115,7 @@ export default function ProjectContainerComponent() {
             value={selectedOptions}
             disabled={editMode}
             // isLoading={true} // TODO implement for fetching and actions
-            onChange={(options: Option[]) => {setSelectedOptions(options); setShowInvoices(false);}} />
+            onChange={(options: Option[]) => {setSelectedOptions(options); props.tabMode === TabsEnum.PROJECTS && setShowInvoices(false);}} />
         </div>
         <div className="column">
           {(selectedOptions.length > 0 || editModeOperation === OperationEnum.INSERT)
@@ -112,12 +129,14 @@ export default function ProjectContainerComponent() {
             getSelectedProjects={getSelectedProjects}
             loadAllProjects={loadAllProjects}
             setSelectedOptions={setSelectedOptions}
+            tabMode={props.tabMode}
+            generateEmptyProjectObject={generateEmptyProjectObject}
           />}
         </div>
       </div>
-      {showInvoices &&
+      {props.tabMode === TabsEnum.PROJECTS && showInvoices &&
          <InvoicesTableComponent
-            getSelectedProjects={getSelectedProjects}
+            selectedProjects={getSelectedProjects()}
             showInvoices={showInvoices}
           />}
     </div>

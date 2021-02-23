@@ -6,10 +6,13 @@ export interface IInvoice {
   amount: number;
   attachment: string;
   elementLabelUid: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface IInvoiceCheckboxHelper extends IInvoice {
-  checked?: boolean;
+  isSelected?: boolean;
+  isInEditMode?: boolean;
+  isHidden?: boolean;
+  hiddenByFilters?: string[];
 }

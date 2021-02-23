@@ -1,12 +1,12 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, OpenDialogReturnValue } from 'electron';
 import isDev from 'electron-is-dev'; // New Import
-import Knex, { QueryBuilder } from 'knex';
+import Knex from 'knex';
+import knexStringcase from 'knex-stringcase';
 import path from 'path';
+import { IFilter } from './models/filters.interface';
 import { IInvoice } from './models/invoices.interface';
 import { IProject } from './models/projects.interface';
 import { generateUid } from './utils/utils';
-import knexStringcase from 'knex-stringcase';
-// import { dialog } from 'electron';
 
 function createWindow(): void {  
 
@@ -98,9 +98,45 @@ function createWindow(): void {
   ipcMain.handle('getInvoices', function(event, projects: IProject[]): Promise<IInvoice[]> {
     return knex("Invoice")
       .select('uid', 'project_uid', 'name', 'amount', 'description',
-        'created_at', 'updated_at', 'element_label_uid')
+        'created_at', 'updated_at', 'attachment', 'element_label_uid')
       .whereIn('project_uid', projects.map((project: IProject) => project.uid))
   });
+  
+  ipcMain.handle('getFilteredInvoices', function(event, projects: IProject[], filters: IFilter): Promise<IInvoice[]> {
+    let result = knex("Invoice")
+      .select('uid', 'project_uid', 'name', 'amount', 'description',
+        'created_at', 'updated_at', 'attachment', 'element_label_uid')
+      .whereIn('project_uid', projects.map((project: IProject) => project.uid))
+      if (filters.name) {
+        // result = result.andWhere('name', 'like', `%${filters.name}%`)
+        result = result.andWhere(
+          knex.raw(`LOWER(name) like '%${filters.name}%'`)
+        )
+      }
+      if (filters.description) {
+        // result = result.andWhere('description', 'like', `%${filters.description}%`)
+        result = result.andWhere(
+          knex.raw(`LOWER(description) like '%${filters.description}%'`)
+        )
+      }
+      if (filters?.amount?.from) {
+        result = result.andWhere('amount', '>', filters.amount.from)
+      }
+      if (filters?.amount?.to) {
+        result = result.andWhere('amount', '<', filters.amount.to)
+      }
+      if (filters?.date?.from) {
+        result = result.andWhere('created_at', '>', Date.parse(filters.date.from))
+      }
+      if (filters?.date?.to) {
+        result = result.andWhere('created_at', '<', Date.parse(filters.date.to))
+      }
+      if (filters.elementLabelUid) {
+        result = result.andWhere({'element_label_uid': filters.elementLabelUid});
+      }
+      
+    return result;
+    });
 
   ipcMain.handle('insertNewInvoice', function(event, invoice: IInvoice): Promise<IInvoice>{
     invoice.uid = invoice.uid ? invoice.uid : generateUid();
@@ -111,7 +147,8 @@ function createWindow(): void {
         name: invoice.name,
         amount: invoice.amount,
         description: invoice.description,
-        //TODO: attachment and label
+        element_label_uid: invoice.elementLabelUid,
+        attachment: invoice.attachment,
         created_at: Date.now(),
         updated_at: Date.now()
       })
@@ -139,7 +176,95 @@ function createWindow(): void {
     }
     return Promise.all(promises);
   });
-  
+
+  ipcMain.handle('updateInvoice', function(event, invoice: IInvoice): Promise<number>{
+    return knex('Invoice')
+      .where('uid', invoice.uid)
+      .update({
+        uid: invoice.uid,
+        project_uid: invoice.projectUid,
+        name: invoice.name,
+        amount: invoice.amount,
+        description: invoice.description,
+        element_label_uid: invoice.elementLabelUid,
+        attachment: invoice.attachment,
+        updated_at: Date.now()
+      });
+  });
+
+  function openPDF(filePath: string){
+    let pdfWindow = new BrowserWindow({
+        width: 1200,
+        height: 800,
+        webPreferences: {
+            plugins: true
+        }
+    });
+
+    pdfWindow.loadURL(`file:///${filePath}`);
+
+    pdfWindow.setMenu(null);
+}
+
+  ipcMain.handle('selectFile', function(event): Promise<OpenDialogReturnValue> {
+    return dialog.showOpenDialog(mainWindow, {
+          properties: ['openFile'],
+          filters: [
+            { name: 'PDF', extensions: ['pdf'] },
+            { name: 'Images', extensions: ['jpg'] }
+          ]
+      })
+  });
+
+  ipcMain.handle('openFile', function(event, path: string): void {
+    openPDF(path);
+  });
+
+  // SECTIONS
+  ipcMain.handle('getAllSections', function(event): Promise<IProject[]> {
+    return knex
+      .select('uid', 'name', 'cost', 'description')
+      .from("Section")
+  });
+
+  ipcMain.handle('insertNewSection', function(event, project: IProject): Promise<IProject[]>{
+    project.uid = project.uid ? project.uid : generateUid();
+    return knex('Section')
+      .insert({
+        uid: project.uid,
+        name: project.name,
+        cost: project.cost,
+        description: project.description
+      })
+      .onConflict('uid')
+      .merge({
+        uid: generateUid()
+      })
+      .then((insertedIdsArray: number[]) => {
+        return knex('Section').where('id', insertedIdsArray[0])
+      })
+  });
+
+  ipcMain.handle('updateSection', function(event, project: IProject): Promise<number>{
+    return knex('Section')
+      .where('uid', project.uid)
+      .update({
+        name: project.name,
+        cost: project.cost,
+        description: project.description
+      });
+  });
+
+  ipcMain.handle('deleteSections', function(event, projects: IProject[]): Promise<number[]> {
+    const promises = [];
+
+    for (let project of projects) {
+      promises.push(knex('Section')
+        .where('uid', project.uid)
+        .del());
+    }
+    return Promise.all(promises);
+  });
 }
 
 app.on('ready', createWindow);
