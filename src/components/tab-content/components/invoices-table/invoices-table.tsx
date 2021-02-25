@@ -97,9 +97,11 @@ export default function InvoicesTableComponent(props: {
   }
 
   function onCancelButtonClick() {
+    if (hsInvoiceMode.value === InvoiceModeEnum.EDIT) {
+      getSelectedInvoiceStates()[0].isInEditMode.set(false);
+    }
     resetInvoiceToEdit();
     hsInvoiceMode.set(InvoiceModeEnum.NONE);
-    hsInvoiceMode.value === InvoiceModeEnum.EDIT && getSelectedInvoiceStates()[0].isInEditMode.set(false);
   }
 
   function resetInvoiceToEdit () {
@@ -122,6 +124,7 @@ export default function InvoicesTableComponent(props: {
 
   
   function getSelectedInvoiceStates(): State<IInvoiceCheckboxHelper>[] {
+    // return cloneObject(hsAllInvoices.filter(invoice => !!invoice.value.isSelected));
     return hsAllInvoices.filter(invoice => !!invoice.value.isSelected);
   }
 
@@ -430,7 +433,7 @@ export default function InvoicesTableComponent(props: {
                 <td>
                   <select 
                     name="projectUid"
-                    disabled={invoiceToEdit.value.uid !== invoice.uid}
+                    disabled={hsInvoiceMode.value === InvoiceModeEnum.EDIT}
                     value={ invoice.isInEditMode ? invoiceToEdit.value.projectUid : invoice.projectUid }
                     onChange={onInputChange}>
                       {getSelectedProjectsOptions()}
