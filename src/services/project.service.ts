@@ -5,6 +5,10 @@ export function getAllProjects(): Promise<IProject[]> {
   return ipcRenderer.invoke("getAllProjects")
 }
 
+export function getTotalSumOfAllProjectCosts(): Promise<Array<{projectCost: number}>> {
+  return ipcRenderer.invoke("getTotalSumOfAllProjectCosts")
+}
+
 export function insertNewProject(project: IProject): Promise<IProject[]> {
   return ipcRenderer.invoke("insertNewProject", project);
 }

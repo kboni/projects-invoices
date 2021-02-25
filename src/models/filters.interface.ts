@@ -1,5 +1,3 @@
-import { IElementLabel } from "./element-labels.interface";
-
 export interface IFilter {
   date: {
     from?: string,

@@ -6,10 +6,10 @@ import { IInvoice, IInvoiceCheckboxHelper } from '@/models/invoices.interface';
 import { IProject } from '@/models/projects.interface';
 import { getAllElementLabels } from '@/services/elementLabel.service';
 import * as invoiceService from '@/services/invoice.service';
-import { cloneObject, formateDateTime, removeItemFromArrayOnce } from '@/utils/utils';
+import { cloneObject, formatCurrency, formateDateTime, removeItemFromArrayOnce } from '@/utils/utils';
 import { State, useState as hsUseState} from '@hookstate/core';
 import { OpenDialogReturnValue } from 'electron';
-import React, { ChangeEvent, useEffect, useState } from 'react';
+import React, { ChangeEvent, useEffect } from 'react';
 import { confirmAlert } from 'react-confirm-alert';
 import '../../../../../assets/style/invoice-table.css';
 
@@ -19,11 +19,10 @@ export default function InvoicesTableComponent(props: {
 }) {
 
   const hsAllInvoices = hsUseState([] as IInvoiceCheckboxHelper[]);
-  const [numberOfSelectedInvoices, setNumberOfSelectedInvoices] = useState(0);
-  const [elementLabels, setElementLabels] = useState([] as IElementLabel[]);
+  const hsAllElementLabels = hsUseState([] as IElementLabel[]);
+  const hsNumberOfSelectedInvoices = hsUseState(0);
   const invoiceToEdit = hsUseState(getEmptyInvoice());
-  const [invoiceMode, setInoviceMode] = useState(InvoiceModeEnum.NONE);
-
+  const hsInvoiceMode = hsUseState(InvoiceModeEnum.NONE);
   const hsFilters = hsUseState(getEmptyFilter());
 
   function getEmptyInvoice(): IInvoiceCheckboxHelper {
@@ -59,7 +58,7 @@ export default function InvoicesTableComponent(props: {
 
     getAllElementLabels()
     .then((fetchedElementlabels: IElementLabel[]) => {
-      setElementLabels(fetchedElementlabels);
+      hsAllElementLabels.set(fetchedElementlabels);
       invoiceToEdit.elementLabelUid.set(fetchedElementlabels[0].uid);
     })
   }, [])
@@ -72,50 +71,23 @@ export default function InvoicesTableComponent(props: {
     .catch((err: Error) => {
       console.error(err);
     });
-  }
-
-  function setVisibleInvoices(updatedFilter?: FilterType) {
-    if (invoiceMode !== InvoiceModeEnum.FILTER || !updatedFilter) {
-      return;
-    }
-
-    // switch (updatedFilter) {
-    //   case FilterType.NAME:
-    //     visibleInvoices.set(
-    //       (prevState: IInvoiceCheckboxHelper[]) =>
-    //       prevState.filter(
-    //         (invoice: IInvoiceCheckboxHelper) => 
-    //         invoice.name.includes(hsFilters.value.name)));
-    //     return;
-    //   case FilterType.DESCRIPTION:
-    //     visibleInvoices.set(
-    //       (prevState: IInvoiceCheckboxHelper[]) =>
-    //       prevState.filter(
-    //         (invoice: IInvoiceCheckboxHelper) =>
-    //         invoice.description.includes(hsFilters.value.description)));
-    //     return;
-    //   case FilterType.DATE:
-    //     return;
-    // };
-  }
+  } 
 
   function onSaveButtonClick() {
-    if (invoiceMode === InvoiceModeEnum.INSERT) {
+    if (hsInvoiceMode.value === InvoiceModeEnum.INSERT) {
       invoiceService.insertNewInvoice(invoiceToEdit.value)
       .then((insertedInvoice: IInvoice) => {
         resetInvoiceToEdit();
-        setInoviceMode(InvoiceModeEnum.NONE);
+        hsInvoiceMode.set(InvoiceModeEnum.NONE);
         fetchInvoices();
       })
       .catch((err: Error) => {
         console.error(err);
       });
-    } else if (invoiceMode === InvoiceModeEnum.EDIT) {
-      invoiceService.updateInvoice(invoiceToEdit.value)
+    } else if (hsInvoiceMode.value === InvoiceModeEnum.EDIT) {
+      invoiceService.updateInvoice(cloneObject(invoiceToEdit.value))
       .then((numberOfUpdatedItems: number) => {
         resetInvoiceToEdit();
-        setInoviceMode(InvoiceModeEnum.EDIT);
-        invoiceToEdit.set({} as IInvoice)
         fetchInvoices();
       })
       .catch((err: Error) => {
@@ -126,8 +98,8 @@ export default function InvoicesTableComponent(props: {
 
   function onCancelButtonClick() {
     resetInvoiceToEdit();
-    setInoviceMode(InvoiceModeEnum.NONE);
-    invoiceMode === InvoiceModeEnum.EDIT && getSelectedInvoiceStates()[0].isInEditMode.set(false);
+    hsInvoiceMode.set(InvoiceModeEnum.NONE);
+    hsInvoiceMode.value === InvoiceModeEnum.EDIT && getSelectedInvoiceStates()[0].isInEditMode.set(false);
   }
 
   function resetInvoiceToEdit () {
@@ -158,7 +130,7 @@ export default function InvoicesTableComponent(props: {
   }
 
   function toggleAllInvoicesSelection(select: boolean) {
-    setNumberOfSelectedInvoices(select ? hsAllInvoices.value.length : 0);
+    hsNumberOfSelectedInvoices.set(select ? hsAllInvoices.value.length : 0);
     hsAllInvoices.set((prevState: IInvoiceCheckboxHelper[]) => {
       return prevState.map((invoice: IInvoiceCheckboxHelper) => {
         invoice.isSelected = select;
@@ -183,7 +155,6 @@ export default function InvoicesTableComponent(props: {
               fetchInvoices();
               toggleAllInvoicesSelection(false);
               console.log(arrayOfDeletedRowNumbers);
-              // TODO: uncheck all checkboxes
             })
             .catch((err: Error) => {
               console.error(err);
@@ -207,7 +178,7 @@ export default function InvoicesTableComponent(props: {
       return;
     } 
     else if (option === 'invoiceUid') {
-      setNumberOfSelectedInvoices((prevState: number) => event.target.checked ? ++prevState : --prevState);
+      hsNumberOfSelectedInvoices.set((prevState: number) => event.target.checked ? ++prevState : --prevState);
       hsAllInvoices.set((prevState: IInvoiceCheckboxHelper[]) => {
         return prevState.map((invoice: IInvoiceCheckboxHelper) => {
           if(invoice.uid === event.target.value) {
@@ -222,12 +193,12 @@ export default function InvoicesTableComponent(props: {
   function onCheckboxChange(event: ChangeEvent<HTMLInputElement>) {
     const index = Number(event.target.value);
 
-    setNumberOfSelectedInvoices((prevState: number) => event.target.checked ? ++prevState : --prevState);
+    hsNumberOfSelectedInvoices.set((prevState: number) => event.target.checked ? ++prevState : --prevState);
     hsAllInvoices[index].isSelected.set(event.target.checked);
   }
 
   function getSelectedInvoicesTotal() {
-    const invs = numberOfSelectedInvoices < 1 || numberOfSelectedInvoices === hsAllInvoices.value.length
+    const invs = hsNumberOfSelectedInvoices.value < 1 || hsNumberOfSelectedInvoices.value === hsAllInvoices.value.length
       ? hsAllInvoices.value
       : getSelectedInvoices();
     
@@ -249,29 +220,38 @@ export default function InvoicesTableComponent(props: {
   }
 
   function onAddButtonClick() {
-    setInoviceMode(InvoiceModeEnum.INSERT);
+    hsInvoiceMode.set(InvoiceModeEnum.INSERT);
   }
 
   function onEditButtonClick() {
-    setInoviceMode(InvoiceModeEnum.EDIT);
+    hsInvoiceMode.set(InvoiceModeEnum.EDIT);
     const selectedInvoiceState = getSelectedInvoiceStates()[0];
     selectedInvoiceState.isInEditMode.set(true);
     invoiceToEdit.set(cloneObject(selectedInvoiceState.value));
   }
 
   function onShowFilterButtonClick() {
-    setInoviceMode(InvoiceModeEnum.FILTER);
+    hsInvoiceMode.set(InvoiceModeEnum.FILTER);
   }
 
   function onHideFilterButtonClick() {
-    // TODO: reset filters and load all invoices
-    setInoviceMode(InvoiceModeEnum.NONE);
+    hsFilters.set(getEmptyFilter())
+    fetchInvoices()
+    hsInvoiceMode.set(InvoiceModeEnum.NONE);
   }
 
   function getSelectedProjectsOptions() {
     return (
       props.selectedProjects.map(project => (
         <option key={project.uid} value={project.uid}>{project.name}</option>
+      ))
+    );
+  }
+
+  function getElementLabelOptions() {
+    return (
+      hsAllElementLabels.value.map(label => (
+        <option key={label.uid} value={label.uid}>{label.name}</option>
       ))
     );
   }
@@ -306,7 +286,7 @@ export default function InvoicesTableComponent(props: {
   }
 
   function onElementLabelFilterChange(event: ChangeEvent<HTMLSelectElement>) {
-    hsFilters.elementLabelUid.set(event.target.value);
+    hsFilters.elementLabelUid.set(event.target.value ? event.target.value : '');
     fetchFilteredInvoices()
   }
 
@@ -329,25 +309,33 @@ export default function InvoicesTableComponent(props: {
   return (
     <div>
       <div className="row">
-        <div className="column">
-           {/*<div className="invoice-filter-container">
-            <span>Spremljeni filteri</span><br/>
-          </div> */}
-        </div>
+        <div className="column"></div>
         <div className="column">
           <div className="invoice-details-container">
             <span>Detalji računa</span><br/>
-            <span>Ukupan iznos { numberOfSelectedInvoices < 1 ? '' : 'oznacenih ' }računa: </span><br/>
-            <span>{getSelectedInvoicesTotal()} HRK</span>
+            <span>Ukupan iznos { hsNumberOfSelectedInvoices.value < 1 ? '' : 'oznacenih ' }računa: </span><br/>
+            <span>{formatCurrency(getSelectedInvoicesTotal())}</span>
           </div>
         </div>
       </div>
-      { invoiceMode !== InvoiceModeEnum.FILTER && <button disabled={ invoiceMode !== InvoiceModeEnum.NONE } onClick={onShowFilterButtonClick}>Prikazi filtere</button>}
-      { invoiceMode === InvoiceModeEnum.FILTER && <button onClick={onHideFilterButtonClick}>Sakrij filtere</button>}
-      <button disabled={ invoiceMode === InvoiceModeEnum.EDIT } onClick={onAddButtonClick}>Add row</button>
-      <button disabled={numberOfSelectedInvoices < 1} onClick={onDeleteButtonClick}>Delete selected invoices</button>
-      <button disabled={numberOfSelectedInvoices !== 1 || invoiceMode === InvoiceModeEnum.INSERT} onClick={ onEditButtonClick }>Edit selected invoices</button>
-      { (invoiceMode === InvoiceModeEnum.EDIT || invoiceMode === InvoiceModeEnum.INSERT) &&
+      { hsInvoiceMode.value !== InvoiceModeEnum.FILTER && <button disabled={ hsInvoiceMode.value !== InvoiceModeEnum.NONE } onClick={onShowFilterButtonClick}>Prikazi filtere</button>}
+      { hsInvoiceMode.value === InvoiceModeEnum.FILTER && <button onClick={onHideFilterButtonClick}>Sakrij filtere</button>}
+      <button
+        disabled={ hsInvoiceMode.value === InvoiceModeEnum.INSERT || hsInvoiceMode.value === InvoiceModeEnum.EDIT }
+        onClick={onAddButtonClick}>
+          Add row
+      </button>
+      <button
+        disabled={hsNumberOfSelectedInvoices.value < 1}
+        onClick={onDeleteButtonClick}>
+          Delete selected invoices
+      </button>
+      <button 
+        disabled={hsNumberOfSelectedInvoices.value !== 1 || hsInvoiceMode.value === InvoiceModeEnum.INSERT || hsInvoiceMode.value === InvoiceModeEnum.EDIT} 
+        onClick={ onEditButtonClick }>
+          Edit selected invoices
+      </button>
+      { (hsInvoiceMode.value === InvoiceModeEnum.EDIT || hsInvoiceMode.value === InvoiceModeEnum.INSERT) &&
         <div>
           <button onClick={ onSaveButtonClick } >Save</button>
           <button onClick={ onCancelButtonClick }>Cancel</button>
@@ -356,7 +344,14 @@ export default function InvoicesTableComponent(props: {
       <table>
         <thead>
           <tr>
-            <td><input type="checkbox" name="selectAll" value="" checked={numberOfSelectedInvoices === hsAllInvoices.value.length} onChange={onSelectAllCheckboxChange}/></td>
+            <td>
+              <input 
+                type="checkbox"
+                name="selectAll"
+                disabled={hsInvoiceMode.value === InvoiceModeEnum.INSERT || hsInvoiceMode.value === InvoiceModeEnum.EDIT}
+                checked={hsNumberOfSelectedInvoices.value === hsAllInvoices.value.length}
+                onChange={onSelectAllCheckboxChange}/>
+            </td>
             <td>Created on</td>
             <td>Project</td>
             <td>Name</td>
@@ -365,7 +360,7 @@ export default function InvoicesTableComponent(props: {
             <td>File</td>
             <td>Label</td>
           </tr>
-          { invoiceMode === InvoiceModeEnum.FILTER &&
+          { hsInvoiceMode.value === InvoiceModeEnum.FILTER &&
           <tr>
             <td></td>
             <td>
@@ -386,15 +381,11 @@ export default function InvoicesTableComponent(props: {
             <td></td>
             <td>
               <select name="elementLabelUid" value={hsFilters.elementLabelUid.value} onChange={onElementLabelFilterChange}>
-                {
-                  elementLabels.map(label => (
-                    <option key={label.uid} value={label.uid}>{label.name}</option>
-                  ))
-                }
+                {getElementLabelOptions()}
               </select>
             </td>
           </tr> }
-          { invoiceMode === InvoiceModeEnum.INSERT &&
+          { hsInvoiceMode.value === InvoiceModeEnum.INSERT &&
             <tr className="new-row">
               <td><input type="checkbox" disabled={true} /></td>
               <td></td>
@@ -416,11 +407,7 @@ export default function InvoicesTableComponent(props: {
               </td>
               <td>
                 <select name="elementLabelUid" value={invoiceToEdit.value.elementLabelUid} onChange={onInputChange}>
-                  {
-                    elementLabels.map(label => (
-                      <option key={label.uid} value={label.uid}>{label.name}</option>
-                    ))
-                  }
+                {getElementLabelOptions()}
                 </select>
               </td>
             </tr>
@@ -429,7 +416,13 @@ export default function InvoicesTableComponent(props: {
             hsAllInvoices.value.map((invoice: IInvoiceCheckboxHelper, index: number) => (
               <tr key={index} >
                 <td>
-                  <input type="checkbox" name={invoice.uid} value={index} checked={invoice.isSelected || false} onChange={onCheckboxChange}/>
+                  <input
+                    type="checkbox"
+                    name={invoice.uid}
+                    value={index}
+                    disabled={hsInvoiceMode.value === InvoiceModeEnum.INSERT || hsInvoiceMode.value === InvoiceModeEnum.EDIT}
+                    checked={invoice.isSelected || false}
+                    onChange={onCheckboxChange}/>
                 </td>
                 <td>
                   { formateDateTime(invoice.createdAt) }
@@ -446,17 +439,16 @@ export default function InvoicesTableComponent(props: {
                 <td>
                   { invoice.isInEditMode ? <input type="text" name="name" value={invoiceToEdit.value.name} onChange={onInputChange}/> : invoice.name }
                 </td>
-                <td>{ invoice.isInEditMode ? <input type="number" name="amount" value={invoiceToEdit.value.amount} onChange={onInputChange}/> : invoice.amount } HRK</td>
+                <td>{ invoice.isInEditMode ? <div><input type="number" name="amount" value={invoiceToEdit.value.amount} onChange={onInputChange}/>HRK</div> : formatCurrency(invoice.amount) } </td>
                 <td>{ invoice.isInEditMode ? <textarea name="description" value={invoiceToEdit.value.description} onChange={onInputChange}></textarea> : invoice.description }</td>
                 <td>
                   { invoice.isInEditMode 
                     ? <div>
                         <button onClick={selectFile}>Select new file</button>
                         <br/><span>{invoiceToEdit.attachment.value}</span>
-                        {/* <br/><span>{invoiceToEdit.value.attachment ? invoiceToEdit.value.attachment : ''}</span> */}
                       </div>
                     : invoice.attachment 
-                      ? <button disabled={invoiceMode === InvoiceModeEnum.FILTER} onClick={() => {openFile(invoice)}}>Open file</button>
+                      ? <button disabled={hsInvoiceMode.value === InvoiceModeEnum.FILTER} onClick={() => {openFile(invoice)}}>Open file</button>
                       : <span>No file</span>
                   }
                 </td>
@@ -466,11 +458,7 @@ export default function InvoicesTableComponent(props: {
                     disabled={!(invoice.isInEditMode)}
                     value={invoice.isInEditMode ? invoiceToEdit.value.elementLabelUid : invoice.elementLabelUid}
                     onChange={onInputChange}>
-                    {
-                      elementLabels.map(label => ( // TODO: Put labels in an array to avoid maping separately in every single row
-                        <option key={label.uid} value={label.uid}>{label.name}</option>
-                      ))
-                    }
+                    {getElementLabelOptions()}
                   </select>
                 </td>
               </tr>

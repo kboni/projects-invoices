@@ -3,7 +3,7 @@ import { IProject } from '@/models/projects.interface';
 import { TabsEnum } from '@/models/tabs.enum';
 import { insertNewProject, updateProject } from '@/services/project.service';
 import { insertNewSection, updateSection } from '@/services/section.service';
-import { mapIProjectsToDropdownOptions } from '@/utils/utils';
+import { formatCurrency, mapIProjectsToDropdownOptions } from '@/utils/utils';
 import React, { ChangeEvent, Dispatch } from 'react';
 import '../../../../../../assets/style/project-details-box.css';
 
@@ -30,7 +30,7 @@ export default function ProjectDetailsBoxComponent(
       return (
         <p>
           <span>Naziv: {currentSelectedProjects[0].name}</span><br/>
-          <span>Iznos: {currentSelectedProjects[0].cost} HRK</span><br/>
+          <span>Iznos: {formatCurrency(currentSelectedProjects[0].cost)}</span><br/>
           <span>Opis: {currentSelectedProjects[0].description}</span>
         </p>
       )
@@ -42,7 +42,7 @@ export default function ProjectDetailsBoxComponent(
 
     return (
       <p>
-        <span>Ukupan iznos oznacenih: {totalAmout} HRK</span><br/>
+        <span>Ukupan iznos oznacenih: {formatCurrency(totalAmout)}</span><br/>
       </p>
     )
   }
@@ -106,8 +106,7 @@ export default function ProjectDetailsBoxComponent(
             <input type="number" 
               value={props.projectToEdit.cost} name="cost"
               onChange={onChange}
-            /> 
-            HRK
+            /> HRK
           </span><br/>
           <span>Opis: 
             <textarea

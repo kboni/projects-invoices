@@ -1,8 +1,10 @@
 import { app, BrowserWindow, dialog, ipcMain, OpenDialogReturnValue } from 'electron';
 import isDev from 'electron-is-dev'; // New Import
+import { Menu } from 'electron';
 import Knex from 'knex';
 import knexStringcase from 'knex-stringcase';
 import path from 'path';
+import { IElementLabel } from './models/element-labels.interface';
 import { IFilter } from './models/filters.interface';
 import { IInvoice } from './models/invoices.interface';
 import { IProject } from './models/projects.interface';
@@ -16,9 +18,11 @@ function createWindow(): void {
     webPreferences: {
       nodeIntegration: true
     },
-    show: false
+    show: false,
+    autoHideMenuBar: true,
+    // frame: false
   });
-
+  Menu.setApplicationMenu(null);
   // const b = dialog.showOpenDialogSync(mainWindow, { properties: ['openFile'] });
 
   // console.log(b)
@@ -29,14 +33,6 @@ function createWindow(): void {
 			// filename: b ? b[0] : path.join(__dirname, 'database.sqlite')
 			filename: path.join(__dirname, '../db/database.sqlite')
 		},
-    // postProcessResponse: (result, queryContext) => {
-    //   // TODO: add special case for raw results (depends on dialect)
-    //   if (Array.isArray(result)) {
-    //     return result.map(row => convertToCamel(row));
-    //   } else {
-    //     return convertToCamel(result);
-    //   }
-    // }
 	}));
 
   console.log(isDev);
@@ -53,6 +49,11 @@ function createWindow(): void {
     return knex
       .select('uid', 'name', 'cost', 'description')
       .from("Project")
+  });
+
+  ipcMain.handle('getTotalSumOfAllProjectCosts', function(event): Promise<Array<{projectCost: number}>> {
+    return knex("Project")
+      .sum('cost as projectCost')
   });
 
   ipcMain.handle('insertNewProject', function(event, project: IProject): Promise<IProject[]>{
@@ -161,11 +162,6 @@ function createWindow(): void {
       })
   });
 
-  ipcMain.handle('getAllElementLabels', function(event): Promise<IProject[]> {
-    return knex('Element_label')
-      .select('uid', 'name')
-  });
-
   ipcMain.handle('deleteInvoices', function(event, invoices: IInvoice[]): Promise<number[]> {
     const promises = [];
 
@@ -227,6 +223,11 @@ function createWindow(): void {
       .from("Section")
   });
 
+  ipcMain.handle('getTotalSumOfAllSectionCosts', function(event): Promise<Array<{sectionCost: number}>> {
+    return knex("Section")
+      .sum('cost as sectionCost')
+  });
+
   ipcMain.handle('insertNewSection', function(event, project: IProject): Promise<IProject[]>{
     project.uid = project.uid ? project.uid : generateUid();
     return knex('Section')
@@ -265,6 +266,43 @@ function createWindow(): void {
     }
     return Promise.all(promises);
   });
+
+  // ELEMENT LABELS
+  ipcMain.handle('getAllElementLabels', function(event): Promise<IElementLabel[]> {
+    return knex('Element_label')
+      .select('uid', 'name')
+  });
+
+  ipcMain.handle('insertNewElementLabel', function(event, label: IElementLabel): Promise<IElementLabel[]>{
+    label.uid = label.uid ? label.uid : generateUid();
+    return knex('Element_label')
+      .insert({
+        uid: label.uid,
+        name: label.name,
+      })
+      .onConflict('uid')
+      .merge({
+        uid: generateUid()
+      })
+      .then((insertedIdsArray: number[]) => {
+        return knex('Element_label').where('id', insertedIdsArray[0])
+      })
+  });
+
+  ipcMain.handle('updateElementLabel', function(event, label: IElementLabel): Promise<number>{
+    return knex('Element_label')
+      .where('uid', label.uid)
+      .update({
+        name: label.name
+      });
+  });
+
+  ipcMain.handle('deleteElementLabel', function(event, label: IElementLabel): Promise<number[]> {
+    return knex('Element_label')
+        .where('uid', label.uid)
+        .del();
+  });
+
 }
 
 app.on('ready', createWindow);

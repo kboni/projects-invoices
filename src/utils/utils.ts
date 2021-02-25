@@ -59,3 +59,7 @@ export function removeItemFromArrayOnce<T>(arr: T[] | undefined, value: T): T[] 
   }
   return arr;
 }
+
+export function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('hr-HR', { style: 'currency', currency: 'HRK' }).format(amount);
+}
