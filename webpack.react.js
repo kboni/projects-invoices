@@ -3,7 +3,7 @@ const path = require('path');
 
 module.exports = {
   mode: 'development',
-  entry: './src/renderer.tsx',
+  entry: './src/app/renderer.tsx',
   target: 'electron-renderer',
   devtool: 'source-map',
   devServer: {
@@ -13,7 +13,9 @@ module.exports = {
   },
   resolve: {
     alias: {
-      ['@']: path.resolve(__dirname, 'src')
+      '@reactapp': path.resolve(__dirname, 'src/app'),
+      '@electron': path.resolve(__dirname, 'src/electron'),
+      '@css': path.resolve(__dirname, 'assets/style')
     },
     extensions: ['.tsx', '.ts', '.js'],
   },

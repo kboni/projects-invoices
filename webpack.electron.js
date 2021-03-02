@@ -9,7 +9,9 @@ module.exports = {
   target: 'electron-main',
   resolve: {
     alias: {
-      ['@']: path.resolve(__dirname, 'src')
+      '@reactapp': path.resolve(__dirname, 'src/app'),
+      '@electron': path.resolve(__dirname, 'src/electron'),
+      '@css': path.resolve(__dirname, 'assets/style')
     },
     extensions: ['.tsx', '.ts', '.js'],
   },
