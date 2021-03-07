@@ -5,9 +5,15 @@
   "author": "Karlo Boni",
   "build": {
     "appId": "com.kboni.invoice-management",
-    "extends": null
+    "files": [
+      "build/**/*",
+      "node_modules/**/*"
+    ],
+    "directories":{
+      "buildResources": "assets"
+    }
   },
-  "main": "dist/main.js",
+  "main": "build/electron.js",
   "keywords": [
     "project",
     "invoice",
@@ -23,10 +29,10 @@
     "electron:build": "electron-builder",
     "react:dev": "webpack serve --mode=development",
     "electron:dev": "nodemon --stats-error-details",
-    "dev": "cp ./db/database.sqlite ./dist/ && concurrently -n react,electron -c bgCyan,bgWhite --kill-others \"npm run react:dev\" \"npm run electron:dev\"",
-    "start": "npm run build && electron dist/main.js --mode=production",
-    "release": "npm run build && npm run electron:build",
-    "rebuild": "electron-rebuild -f -w sqlite3"
+    "dev": "concurrently -n react,electron -c bgCyan,bgWhite --kill-others \"npm run react:dev\" \"npm run electron:dev\"",
+    "start": "npm run build && electron build/electron.js --mode=production",
+    "release": "npm run build && mkdirp public && cp build/electron.js public/electron.js && npm run electron:build",
+    "electron-pack": "build --em.main=build/electron.js"
   },
   "dependencies": {
     "@hookstate/core": "3.0.4",
@@ -55,7 +61,6 @@
     "electron": "11.2.1",
     "electron-builder": "^22.9.1",
     "electron-is-dev": "^1.2.0",
-    "electron-rebuild": "^2.3.4",
     "html-webpack-plugin": "4.5.1",
     "nodemon": "^2.0.7",
     "noop2": "^2.0.0",

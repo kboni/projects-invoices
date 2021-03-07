@@ -23,8 +23,8 @@ module.exports = {
     }]
   },
   output: {
-    path: __dirname + '/dist',
-    filename: 'main.js'
+    path: __dirname + '/build',
+    filename: 'electron.js'
   },
   plugins: [
     // Ignore knex dynamic required dialects that we don't use

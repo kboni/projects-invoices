@@ -1,16 +1,15 @@
-import { app, BrowserWindow, dialog, ipcMain, OpenDialogReturnValue } from 'electron';
-import isDev from 'electron-is-dev'; // New Import
-import { Menu } from 'electron';
-import Knex from 'knex';
-import knexStringcase from 'knex-stringcase';
-import path from 'path';
 import { IElementLabel } from '@reactapp/models/element-labels.interface';
 import { IFilter } from '@reactapp/models/filters.interface';
 import { IInvoice } from '@reactapp/models/invoices.interface';
 import { IProject } from '@reactapp/models/projects.interface';
 import { generateUid } from '@reactapp/utils/utils';
-import * as fs from 'fs';
+import { app, BrowserWindow, dialog, ipcMain, OpenDialogReturnValue } from 'electron';
+import isDev from 'electron-is-dev'; // New Import
 import settings from 'electron-settings';
+import * as fs from 'fs';
+import Knex from 'knex';
+import knexStringcase from 'knex-stringcase';
+import path from 'path';
 
 
 function checkConfigAndItemExists(config: string): boolean {
@@ -91,7 +90,7 @@ function createWindow(): void {
     },
     show: false
   });
-  // mainWindow.setMenu(null);
+  mainWindow.setMenu(null);
   // Menu.setApplicationMenu(null);
   
   // CONFIG
@@ -178,6 +177,7 @@ function createWindow(): void {
     isDev // TODO: Replace isDev with ENV vars
       ? 'http://localhost:9000'
       : `file://${path.join(app.getAppPath(), 'index.html')}`
+      // `file://${path.join(__dirname, 'index.html')}`
   );
   mainWindow.once("ready-to-show", () => { mainWindow.show() })
 

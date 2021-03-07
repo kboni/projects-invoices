@@ -42,7 +42,7 @@ export default function ProjectDetailsBoxComponent(
 
     return (
       <p>
-        <span>Ukupan iznos označenih projekata: {formatCurrency(totalAmout)}</span><br/>
+        <span>Ukupan iznos označenih projekata:<br />{formatCurrency(totalAmout)}</span><br/>
       </p>
     )
   }
@@ -115,8 +115,8 @@ export default function ProjectDetailsBoxComponent(
             />
           </span> <br/>
 
-          <button onClick={onSaveButtonClick}>Save</button>
-          <button onClick={onCancelButtonClick}>Cancel</button>
+          <button onClick={onSaveButtonClick}>Spremi</button>
+          <button onClick={onCancelButtonClick}>Odustani</button>
         </p>
       )
     }

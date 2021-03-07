@@ -309,22 +309,22 @@ export default function InvoicesTableComponent(props: {
       <button
         disabled={ hsInvoiceMode.value === InvoiceModeEnum.INSERT || hsInvoiceMode.value === InvoiceModeEnum.EDIT }
         onClick={onAddButtonClick}>
-          Add row
+          Dodaj račun
       </button>
       <button
         disabled={hsNumberOfSelectedInvoices.value < 1}
         onClick={onDeleteButtonClick}>
-          Delete selected invoices
+          Obriši označene račune
       </button>
       <button 
         disabled={hsNumberOfSelectedInvoices.value !== 1 || hsInvoiceMode.value === InvoiceModeEnum.INSERT || hsInvoiceMode.value === InvoiceModeEnum.EDIT} 
         onClick={ onEditButtonClick }>
-          Edit selected invoices
+          Uredi označene račune
       </button>
       { (hsInvoiceMode.value === InvoiceModeEnum.EDIT || hsInvoiceMode.value === InvoiceModeEnum.INSERT) &&
         <div>
-          <button onClick={ onSaveButtonClick } >Save</button>
-          <button onClick={ onCancelButtonClick }>Cancel</button>
+          <button onClick={ onSaveButtonClick } >Spremi</button>
+          <button onClick={ onCancelButtonClick }>Odustani</button>
         </div>
       }
       <table>
@@ -387,7 +387,7 @@ export default function InvoicesTableComponent(props: {
               <td><textarea name="description" onChange={onInputChange}></textarea></td>
               <td>
               <div>
-                <button onClick={selectFile}>Selektiraj fajl</button>
+                <button onClick={selectFile}>Označi datoteku</button>
                 <br /><span>{invoiceToEdit.value.attachment}</span>
               </div>
               </td>
@@ -430,12 +430,12 @@ export default function InvoicesTableComponent(props: {
                 <td>
                   { invoice.isInEditMode 
                     ? <div>
-                        <button onClick={selectFile}>Select new file</button>
+                        <button onClick={selectFile}>Označi novu datoteku</button>
                         <br/><span>{invoiceToEdit.attachment.value}</span>
                       </div>
                     : invoice.attachment 
-                      ? <button disabled={hsInvoiceMode.value === InvoiceModeEnum.FILTER} onClick={() => {openFile(invoice)}}>Otvori fajl</button>
-                      : <span>No file</span>
+                      ? <button disabled={hsInvoiceMode.value !== InvoiceModeEnum.NONE} onClick={() => {openFile(invoice)}}>Otvori datoteku</button>
+                      : <span>Nema označene datoteke</span>
                   }
                 </td>
                 <td>
