@@ -90,8 +90,6 @@ function createWindow(): void {
     },
     show: false
   });
-  mainWindow.setMenu(null);
-  // Menu.setApplicationMenu(null);
   
   // CONFIG
   ipcMain.handle('checkAllConfig', function(event): boolean{
@@ -172,15 +170,15 @@ function createWindow(): void {
     settings.setSync('config.darkMode', false);
   }
   
-  console.log(isDev);
-  mainWindow.loadURL(
-    isDev // TODO: Replace isDev with ENV vars
-      ? 'http://localhost:9000'
-      : `file://${path.join(app.getAppPath(), 'index.html')}`
-      // `file://${path.join(__dirname, 'index.html')}`
-  );
+  let windowUrl = '';
+  if (isDev) {
+    windowUrl = 'http://localhost:9000';
+  } else {
+    windowUrl = `file://${path.join(__dirname, 'index.html')}`;
+    mainWindow.setMenu(null);
+  }
+  mainWindow.loadURL(windowUrl);
   mainWindow.once("ready-to-show", () => { mainWindow.show() })
-
   mainWindow.on('closed', () => app.quit());
 
   const dbConfig = settings.getSync('config.db');

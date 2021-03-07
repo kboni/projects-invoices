@@ -416,7 +416,7 @@ export default function InvoicesTableComponent(props: {
                 <td>
                   <select 
                     name="projectUid"
-                    disabled={hsInvoiceMode.value === InvoiceModeEnum.EDIT}
+                    disabled={ !invoice.isInEditMode }
                     value={ invoice.isInEditMode ? invoiceToEdit.value.projectUid : invoice.projectUid }
                     onChange={onInputChange}>
                       {getSelectedProjectsOptions()}
