@@ -1,19 +1,19 @@
+import { DBTableName } from '@reactapp/models/database-table.enum';
 import { OperationEnum } from '@reactapp/models/edit-mode-operations.enum';
 import { IProject } from '@reactapp/models/projects.interface';
 import { deleteProjects, getAllProjects } from '@reactapp/services/project.service';
 import { mapDropdownOptionsToIProjects, mapIProjectsToDropdownOptions } from '@reactapp/utils/utils';
 import React, { useState } from 'react';
 import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 import MultiSelect from "react-multi-select-component";
 import { Option } from "react-multi-select-component/dist/lib/interfaces";
 import InvoicesTableComponent from '../invoices-table/invoices-table';
-import ProjectDetailsBoxComponent from '../shared/project-details-box/project-details-box';
-import 'react-confirm-alert/src/react-confirm-alert.css';
-import { TabsEnum } from '@reactapp/models/tabs.enum';
-import { deleteSections, getAllSections } from '@reactapp/services/section.service';
+import ProjectDetailsBoxComponent from '../project-details-box/project-details-box';
 
 export default function ProjectContainerComponent(props: {
-  tabMode: TabsEnum
+  tabDBProjectTableName: DBTableName,
+  tabDBProjectInvoiceTableName: DBTableName
 }) {
 
   const [editMode, setEditMode] = useState(false);
@@ -41,7 +41,7 @@ export default function ProjectContainerComponent(props: {
   }
 
   function loadAllProjects() {
-    (props.tabMode === TabsEnum.SECTIONS ? getAllSections() : getAllProjects())
+    getAllProjects(props.tabDBProjectTableName)
     .then((projects: IProject[]) => {
       setAllProjects(projects);
       setAllOptions(mapIProjectsToDropdownOptions(projects));
@@ -64,13 +64,13 @@ export default function ProjectContainerComponent(props: {
   function onDeleteButtonClick() {
     confirmAlert({
       title: 'Potvrda brisanja',
-      message: 'Jeste li sigurni da želite obrisati označen(e) projekt(e)?',
+      message: 'Jeste li sigurni da želite obrisati označeno?',
       buttons: [
         {
           label: 'Da',
           onClick: () => {
             console.log("Delete");
-            (props.tabMode === TabsEnum.SECTIONS ? deleteSections(getSelectedProjects()) : deleteProjects(getSelectedProjects()))
+            deleteProjects(getSelectedProjects(), props.tabDBProjectTableName)
             .then((arrayOfDeletedRowNumbers: number[]) => {
               // TODO: if arrayOfDeletedRowNumbers === [0] then it's an error because nothing got deleted
               console.log(arrayOfDeletedRowNumbers);
@@ -96,18 +96,15 @@ export default function ProjectContainerComponent(props: {
   }
   
   return (
-    <div>
+    <div className="inner-tabcontent">
       <div className="row">
         <div className="column">
           <div className="button-container">
-            <button onClick={onAddButtonClick}>Dodaj novi projekt</button>
+            <button onClick={onAddButtonClick}>Dodaj novi</button>
             <button disabled={selectedOptions.length !== 1} onClick={onEditButtonClick}>Uredi</button>
-            <button disabled={selectedOptions.length < 1} onClick={onDeleteButtonClick}>Obriši označen(e) projekt(e)</button>
-            {props.tabMode === TabsEnum.PROJECTS &&
-              <div>
-                <br /><button disabled={selectedOptions.length < 1} onClick={() => setShowInvoices((prevState: boolean) => !prevState)}>Prikaži račune</button>
-              </div>
-            }
+            <button disabled={selectedOptions.length < 1} onClick={onDeleteButtonClick}>Obriši označeno</button>
+            <br />
+            <button disabled={selectedOptions.length < 1} onClick={() => setShowInvoices((prevState: boolean) => !prevState)}>Prikaži račune</button>
           </div>
           <MultiSelect 
             labelledBy={"Select"}
@@ -116,13 +113,13 @@ export default function ProjectContainerComponent(props: {
             disabled={editMode}
             overrideStrings={{
               "selectSomeItems": "Označi...",
-              "allItemsAreSelected": "Svi projekti su označeni",
+              "allItemsAreSelected": "Svi su označeni",
               "selectAll": "Označi sve",
               "search": "Traži",
               "clearSearch": "Isprazni tražilicu"
             }}
             // isLoading={true} // TODO implement for fetching and actions
-            onChange={(options: Option[]) => {setSelectedOptions(options); props.tabMode === TabsEnum.PROJECTS && setShowInvoices(false);}} />
+            onChange={(options: Option[]) => {setSelectedOptions(options); setShowInvoices(false);}} />
         </div>
         <div className="column">
           {(selectedOptions.length > 0 || editModeOperation === OperationEnum.INSERT)
@@ -136,15 +133,16 @@ export default function ProjectContainerComponent(props: {
             getSelectedProjects={getSelectedProjects}
             loadAllProjects={loadAllProjects}
             setSelectedOptions={setSelectedOptions}
-            tabMode={props.tabMode}
+            tabDBProjectTableName={props.tabDBProjectTableName}
             generateEmptyProjectObject={generateEmptyProjectObject}
           />}
         </div>
       </div>
-      {props.tabMode === TabsEnum.PROJECTS && showInvoices &&
+      {showInvoices &&
          <InvoicesTableComponent
             selectedProjects={getSelectedProjects()}
             showInvoices={showInvoices}
+            tabDBProjectInvoiceTableName={props.tabDBProjectInvoiceTableName}
           />}
     </div>
   );

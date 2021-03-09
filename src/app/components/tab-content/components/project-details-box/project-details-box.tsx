@@ -2,10 +2,10 @@ import { OperationEnum } from '@reactapp/models/edit-mode-operations.enum';
 import { IProject } from '@reactapp/models/projects.interface';
 import { TabsEnum } from '@reactapp/models/tabs.enum';
 import { insertNewProject, updateProject } from '@reactapp/services/project.service';
-import { insertNewSection, updateSection } from '@reactapp/services/section.service';
 import { formatCurrency, mapIProjectsToDropdownOptions } from '@reactapp/utils/utils';
 import React, { ChangeEvent, Dispatch } from 'react';
 import '@css/project-details-box.css';
+import { DBTableName } from '@reactapp/models/database-table.enum';
 
 export default function ProjectDetailsBoxComponent(
   props: {
@@ -19,7 +19,7 @@ export default function ProjectDetailsBoxComponent(
     setSelectedOptions: Function,
     loadAllProjects: Function,
     generateEmptyProjectObject: Function,
-    tabMode: TabsEnum
+    tabDBProjectTableName: DBTableName
 }
 ) {
 
@@ -42,7 +42,7 @@ export default function ProjectDetailsBoxComponent(
 
     return (
       <p>
-        <span>Ukupan iznos označenih projekata:<br />{formatCurrency(totalAmout)}</span><br/>
+        <span>Ukupan iznos označenih:<br />{formatCurrency(totalAmout)}</span><br/>
       </p>
     )
   }
@@ -51,8 +51,7 @@ export default function ProjectDetailsBoxComponent(
 
     function onSaveButtonClick() {
       if (props.editModeOperation === OperationEnum.INSERT) {
-        (props.tabMode === TabsEnum.SECTIONS ? insertNewSection(props.projectToEdit) : insertNewProject(props.projectToEdit))
-        
+        insertNewProject(props.projectToEdit, props.tabDBProjectTableName)
         .then((insertedProject: IProject[]) => {
           console.log("INSERT")
           console.log(insertedProject[0])
@@ -65,7 +64,7 @@ export default function ProjectDetailsBoxComponent(
           alert(err.message);
         });
       } else if (props.editModeOperation === OperationEnum.UPDATE) {
-        (props.tabMode === TabsEnum.SECTIONS ? updateSection(props.projectToEdit) : updateProject(props.projectToEdit))
+        updateProject(props.projectToEdit, props.tabDBProjectTableName)
         .then((numberOfUpdatedItems: number) => {
           console.log("UPDATE")
           console.log(numberOfUpdatedItems)
@@ -124,7 +123,7 @@ export default function ProjectDetailsBoxComponent(
   return (
     <div className="project-details-box">
       <p>
-        <span>Detalji projekta:</span>
+        <span>Detalji:</span>
       </p>
       {props.editMode ? showAndEditDetails() : showDetails()}
     </div>

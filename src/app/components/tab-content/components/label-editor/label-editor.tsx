@@ -79,7 +79,7 @@ export default function LabelEditorComponent() {
   }
   
   return (
-    <div>
+    <div className="inner-tabcontent">
       <span className="blue-text">
         Elementi:
       </span>

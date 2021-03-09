@@ -1,7 +1,7 @@
+import '@css/shared.css';
 import { useState } from '@hookstate/core';
 import * as configurationService from '@reactapp/services/configuration.service';
 import React, { useEffect } from 'react';
-import '@css/shared.css'
 
 export function ConfigurationComponent() {
 
@@ -9,6 +9,8 @@ export function ConfigurationComponent() {
   const selectedDatabasePathState = useState(noDatabase);
   const noInvoiceFileLocation = 'No Invoice file location selected';
   const selectedFileLocationPathState = useState(noInvoiceFileLocation);
+
+  // TODO: Add error handlers
 
   useEffect(() => {
     configurationService.getDatabasePathConfig()
@@ -58,7 +60,7 @@ export function ConfigurationComponent() {
   }
 
   return (
-    <div>
+    <div  className="inner-tabcontent">
       <span className="blue-text">
         {selectedDatabasePathState.value}
       </span>

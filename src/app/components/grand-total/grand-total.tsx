@@ -1,17 +1,17 @@
+import { DBTableName } from "@reactapp/models/database-table.enum";
 import { getTotalSumOfAllProjectCosts } from "@reactapp/services/project.service";
-import { getTotalSumOfAllSectionCosts } from "@reactapp/services/section.service";
 import { formatCurrency } from "@reactapp/utils/utils";
 import React, { useState } from "react";
 
 export default function GrandTotalComponent() {
   const [total, setTotal] = useState('');
   
-  const projectTotalPromise = getTotalSumOfAllProjectCosts()
-  const sectionTotalPromise = getTotalSumOfAllSectionCosts()
+  const projectTotalPromise = getTotalSumOfAllProjectCosts(DBTableName.PROJECT);
+  const sectionTotalPromise = getTotalSumOfAllProjectCosts(DBTableName.SECTION);
   
   Promise.all([projectTotalPromise, sectionTotalPromise])
   .then(([projectTotal, sectionTotal]) => {
-    setTotal(formatCurrency(projectTotal[0].projectCost + sectionTotal[0].sectionCost));
+    setTotal(formatCurrency(projectTotal[0].totalCost + sectionTotal[0].totalCost));
     console.log('SETTING TOTAL AGAIN')
   })
 

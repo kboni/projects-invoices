@@ -1,3 +1,6 @@
+import '@css/invoice-table.css';
+import { State, useState as hsUseState } from '@hookstate/core';
+import { DBTableName } from '@reactapp/models/database-table.enum';
 import { IElementLabel } from '@reactapp/models/element-labels.interface';
 import { IFilter } from '@reactapp/models/filters.interface';
 import { InvoiceModeEnum } from '@reactapp/models/invoice-mode-enum';
@@ -5,16 +8,15 @@ import { IInvoice, IInvoiceCheckboxHelper } from '@reactapp/models/invoices.inte
 import { IProject } from '@reactapp/models/projects.interface';
 import { getAllElementLabels } from '@reactapp/services/elementLabel.service';
 import * as invoiceService from '@reactapp/services/invoice.service';
-import { cloneObject, formatCurrency, formateDateTime, removeItemFromArrayOnce } from '@reactapp/utils/utils';
-import { State, useState as hsUseState} from '@hookstate/core';
+import { cloneObject, formatCurrency, formateDateTime } from '@reactapp/utils/utils';
 import { OpenDialogReturnValue } from 'electron';
 import React, { ChangeEvent, useEffect } from 'react';
 import { confirmAlert } from 'react-confirm-alert';
-import '@css/invoice-table.css';
 
 export default function InvoicesTableComponent(props: {
   selectedProjects: IProject[],
-  showInvoices: boolean
+  showInvoices: boolean,
+  tabDBProjectInvoiceTableName: DBTableName
 }) {
 
   const hsAllInvoices = hsUseState([] as IInvoiceCheckboxHelper[]);
@@ -60,7 +62,7 @@ export default function InvoicesTableComponent(props: {
   }, [])
 
   function fetchInvoices() {
-    invoiceService.getInvoices(props.selectedProjects)
+    invoiceService.getInvoices(props.selectedProjects, props.tabDBProjectInvoiceTableName)
     .then((fetchedInvoices: IInvoice[]) => {
       hsAllInvoices.set(fetchedInvoices);
     })
@@ -80,7 +82,7 @@ export default function InvoicesTableComponent(props: {
     if (hsInvoiceMode.value === InvoiceModeEnum.INSERT) {
       invoiceToEdit.amount.set(Number(invoiceToEdit.amount.value));
       !invoiceToEdit.attachment.value && invoiceToEdit.attachment.set('')
-      invoiceService.insertNewInvoice(cloneObject(invoiceToEdit.value))
+      invoiceService.insertNewInvoice(cloneObject(invoiceToEdit.value), props.tabDBProjectInvoiceTableName)
       .then((insertedInvoice: IInvoice) => {
         afterSaveReset();
       })
@@ -89,7 +91,7 @@ export default function InvoicesTableComponent(props: {
       });
     } else if (hsInvoiceMode.value === InvoiceModeEnum.EDIT) {
       !invoiceToEdit.attachment.value && invoiceToEdit.attachment.set('')
-      invoiceService.updateInvoice(cloneObject(invoiceToEdit.value))
+      invoiceService.updateInvoice(cloneObject(invoiceToEdit.value), props.tabDBProjectInvoiceTableName)
       .then((numberOfUpdatedItems: number) => {
         afterSaveReset();
       })
@@ -149,7 +151,7 @@ export default function InvoicesTableComponent(props: {
           label: 'Da',
           onClick: () => {
             console.log("Delete")
-            invoiceService.deleteInvoices(cloneObject(getSelectedInvoices()))
+            invoiceService.deleteInvoices(cloneObject(getSelectedInvoices()), props.tabDBProjectInvoiceTableName)
             .then((arrayOfDeletedRowNumbers: number[]) => {
               // TODO: if arrayOfDeletedRowNumbers === [0] then it's an error because nothing got deleted
               fetchInvoices();
@@ -279,7 +281,7 @@ export default function InvoicesTableComponent(props: {
     // TODO: Take care of selection when filters are on
     hsNumberOfSelectedInvoices.set(0);
     console.log(filterToSerializable())
-    invoiceService.getFilteredInvoices(props.selectedProjects, filterToSerializable())
+    invoiceService.getFilteredInvoices(props.selectedProjects, filterToSerializable(), props.tabDBProjectInvoiceTableName)
     .then((fetchedInvoices: IInvoice[]) => {
       hsAllInvoices.set(fetchedInvoices);
     })
@@ -339,7 +341,7 @@ export default function InvoicesTableComponent(props: {
                 onChange={onSelectAllCheckboxChange}/>
             </td>
             <td>Kreirano</td>
-            <td>Projekt</td>
+            <td>Proj/Sek</td>
             <td>Naziv</td>
             <td>Iznos</td>
             <td>Opis</td>
